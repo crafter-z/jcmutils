@@ -15,7 +15,7 @@ class solver:
         DATA_FROMAT = "%Y/%m/%d %H:%M:%S"
 
         # 初始化log
-        if use_log_file:
+        if not use_log_file:
             logging.basicConfig(format=LOG_FORMAT,
                                 datefmt=DATA_FROMAT, level=log_level)
         else:
