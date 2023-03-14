@@ -12,23 +12,26 @@ def gen_kohler_sources(maxtheta, phi0, spacing, lambda0, flag_is_symmetry=False)
     for sx in candidate:
         for sy in candidate:
             if sx**2 + sy**2 <= np.sin(maxtheta)**2:
+                if flag_is_symmetry:
+                    if (sx < 0 and sy <=0) or (sx >=0 and sy < 0):
+                        continue
                 coordinate.append([sx, sy])
 
     # 计算刚才得到的孔径光阑上的点对应的入射平面波
     keys = []
     for i in coordinate:
-        theta = 0
         phi = 0
+        theta = 0
         if i[0] > 0 and i[1] >= 0:
             phi = np.arctan(i[1]/i[0])
             theta = np.arcsin(i[0]/np.cos(phi))
         if i[0] <= 0 and i[1] > 0:
             phi = np.pi/2 if i[0] == 0 else np.arctan(i[1]/i[0]) + np.pi
             theta = np.arcsin(i[1]/np.sin(phi))
-        if (flag_is_symmetry is False) and (i[0] < 0 and i[1] <= 0):
+        if i[0] < 0 and i[1] <= 0:
             phi = np.arctan(i[1]/i[0]) + np.pi
             theta = np.arcsin(i[0]/np.cos(phi))
-        if (flag_is_symmetry is False) and (i[0] >= 0 and i[1] < 0):
+        if i[0] >= 0 and i[1] < 0:
             phi = np.pi*3/2 if i[0] == 0 else np.arctan(i[1]/i[0]) + 2*np.pi
             theta = np.arcsin(i[1]/np.sin(phi))
         keys.append({'thetaphi': [theta, phi], 'lambda0': lambda0})
