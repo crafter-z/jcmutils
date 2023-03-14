@@ -181,8 +181,13 @@ class solver:
         res = ""
         for key, value in target_dict.items():
             res += key + "-"
-            for i in value:
-                if isinstance(i, float):
-                    res += "{:.2f}".format(i) + "-"
+            if isinstance(value,list):
+                for i in value:
+                    if isinstance(i, float):
+                        res += "{:.2f}-".format(i)
+                    else:
+                        res += f"{i}-"
+            else:
+                res += f"{value}-"
         res.rstrip('-')
         return res
