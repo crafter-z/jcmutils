@@ -129,10 +129,10 @@ class solver:
             logger.debug("target directory dosen't exist,creating...")
             os.mkdir(target_directory)
         plt.cla()
-        plt.axis('square')
-        plt.axis('off')
         plt.pcolormesh(field[num_of_result]['X'], field[num_of_result]['Y'],
                        field, shading='gouraud', cmap='gray')
+        plt.axis('square')
+        plt.axis('off')
         plt.savefig(target_directory.rstrip("/") + "output.jpg", bbox_inches='tight', pad_inches=0)
 
     def save_all_image(self, num_of_result, target_directory, is_light_intense=False, is_symmetry=False):
@@ -165,10 +165,10 @@ class solver:
             file_name = target_directory.rstrip(
                 '/') + '/' + self.__solve_dict(key) + ".jpg"
             plt.cla()
-            plt.axis('square')
-            plt.axis('off')
             plt.pcolormesh(result[num_of_result]['X'],result[num_of_result]['Y'],
                            field, shading='gouraud', cmap='gray')
+            plt.axis('square')
+            plt.axis('off')
             plt.savefig(file_name, bbox_inches='tight', pad_inches=0)
             logger.debug(f"key {key} successfully saved")
             if is_symmetry:
@@ -177,10 +177,10 @@ class solver:
                 logger.debug("key was rotated for symmetry")
 
         plt.cla()
-        plt.axis('square')
-        plt.axis('off')
         plt.pcolormesh(temp_result[num_of_result]['X'],temp_result[num_of_result]['Y'],
                        total_results, shading='gouraud', cmap='gray')
+        plt.axis('square')
+        plt.axis('off')
         file_name = target_directory.rstrip('/') + '/' + "total_result.jpg"
         plt.savefig(file_name, bbox_inches='tight', pad_inches=0)
         logger.info("all target image saved completed!")
