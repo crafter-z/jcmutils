@@ -2,6 +2,7 @@ import jcmwave
 import numpy as np
 import logging
 import matplotlib.pyplot as plt
+import os
 
 
 class solver:
@@ -111,7 +112,7 @@ class solver:
     def get_result(self, key):
         return self.resultbag.get_result(key)
 
-    def save_image(self, file_path, key, num_of_result, is_light_intense=False):
+    def save_image(self, target_directory, key, num_of_result, is_light_intense=False):
         logger = self.logger
         if not self.resultbag.check_result(key):
             logger.error("get result failed! target key not find")
@@ -124,12 +125,15 @@ class solver:
                  result[num_of_result]['field'][0]).sum(axis=2).real
         if is_light_intense:
             field = np.power(field, 2)
+        if not os.path.exists(target_directory):
+            logger.debug("target directory dosen't exist,creating...")
+            os.mkdir(target_directory)
         plt.cla()
         plt.axis('square')
         plt.axis('off')
         plt.pcolormesh(field[num_of_result]['X'], field[num_of_result]['Y'],
                        field, shading='gouraud', cmap='gray')
-        plt.savefig(file_path, bbox_inches='tight', pad_inches=0)
+        plt.savefig(target_directory.rstrip("/") + "output.jpg", bbox_inches='tight', pad_inches=0)
 
     def save_all_image(self, num_of_result, target_directory, is_light_intense=False, is_symmetry=False):
         logger = self.logger
@@ -154,12 +158,16 @@ class solver:
             if is_light_intense:
                 field = np.power(field, 2)
             total_results += field
+
+            if not os.path.exists(target_directory):
+                logger.debug("target directory dosen't exist,creating...")
+                os.mkdir(target_directory)
             file_name = target_directory.rstrip(
                 '/') + '/' + self.__solve_dict(key) + ".jpg"
             plt.cla()
             plt.axis('square')
             plt.axis('off')
-            plt.pcolormesh(field[num_of_result]['X'], field[num_of_result]['Y'],
+            plt.pcolormesh(result[num_of_result]['X'],result[num_of_result]['Y'],
                            field, shading='gouraud', cmap='gray')
             plt.savefig(file_name, bbox_inches='tight', pad_inches=0)
             logger.debug(f"key {key} successfully saved")
@@ -171,7 +179,7 @@ class solver:
         plt.cla()
         plt.axis('square')
         plt.axis('off')
-        plt.pcolormesh(field[num_of_result]['X'], field[num_of_result]['Y'],
+        plt.pcolormesh(temp_result[num_of_result]['X'],temp_result[num_of_result]['Y'],
                        total_results, shading='gouraud', cmap='gray')
         file_name = target_directory.rstrip('/') + '/' + "total_result.jpg"
         plt.savefig(file_name, bbox_inches='tight', pad_inches=0)
