@@ -11,6 +11,10 @@ setup(
     description=DESCRIPTION,
     packages=find_packages(),
     install_requires=["numpy","matplotlib"],
-    keywords=["jcmsuite","utils"]
-
+    keywords=["jcmsuite","utils"],
+    classifiers=[
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    ]
 )
