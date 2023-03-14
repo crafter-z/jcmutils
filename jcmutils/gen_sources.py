@@ -3,7 +3,7 @@ import numpy as np
 
 def gen_kohler_sources(maxtheta, phi0, spacing, lambda0, flag_is_symmetry=False):
     maxtheta = np.deg2rad(maxtheta)
-    phi0 = np.deg2rad(maxtheta)
+    phi0 = np.deg2rad(phi0)
     # 按spacing的间隔生成候选
     candidate = np.linspace(-np.sin(maxtheta), np.sin(maxtheta), spacing)
 
