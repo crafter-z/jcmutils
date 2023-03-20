@@ -4,13 +4,13 @@ def init_logger(use_logfile= False, logfile_path= "jcmlog.log",log_format= "|%(a
     logger = logging.getLogger("JCM")
     if use_logfile:
         fh = logging.FileHandler(logfile_path,mode='a',encoding='UTF-8',delay=False)
-        fh.setLevel(log_level)
         fh.setFormatter(logging.Formatter(log_format,data_format))
+        logger.setLevel(log_level)
         logger.addHandler(fh)
         return logger
     else:
         sh = logging.StreamHandler(stream=None)
-        sh.setLevel(log_level)
         sh.setFormatter(logging.Formatter(log_format,data_format))
+        logger.setLevel(log_level)
         logger.addHandler(sh)
         return logger
