@@ -74,6 +74,7 @@ class solver:
                         "Memory Limit Exceeded!! trying to solve it again")
                     logger.warning(f"the key is : {key}")
                     no_error = False
+                    self.resultbag.remove_result(key)
                     backup_keys.append(key)
                 else:
                     logger.critical(
