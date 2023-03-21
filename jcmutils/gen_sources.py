@@ -1,9 +1,14 @@
 import numpy as np
+from .logger import logger
 
 
 def gen_kohler_sources(maxtheta, phi0, spacing, lambda0, flag_is_symmetry=False):
+    logger.info("generating kohler sources")
+    logger.debug(f"received parameters was :maxtheta-{maxtheta}-phi0-{phi0}-spacing-{spacing}-lambda0-{lambda0}-symmetry-{flag_is_symmetry}")
+
     maxtheta = np.deg2rad(maxtheta)
     phi0 = np.deg2rad(phi0)
+
     # 按spacing的间隔生成候选
     candidate = np.linspace(-1, 1, spacing)
     f=1/np.tan(maxtheta)
@@ -17,6 +22,7 @@ def gen_kohler_sources(maxtheta, phi0, spacing, lambda0, flag_is_symmetry=False)
                     if (mu < 0 and nu <=0) or (mu >=0 and nu < 0):
                         continue
                 coordinate.append([mu, nu])
+    logger.debug(f"got coordinates done, {len(coordinate)} coordinates are generated")
 
     # 计算刚才得到的孔径光阑上的点对应的入射平面波
     keys = []
@@ -38,5 +44,8 @@ def gen_kohler_sources(maxtheta, phi0, spacing, lambda0, flag_is_symmetry=False)
         key['SP'] = [np.sin(key['thetaphi'][1] - phi0),np.cos(key['thetaphi'][1] - phi0)]
         key['thetaphi'][0] = np.rad2deg(key['thetaphi'][0])
         key['thetaphi'][1] = np.rad2deg(key['thetaphi'][1])
+        logger.debug(f"key->{key} was successfully generated")
+    
+    logger.debug("kohler sources generate done")
 
     return keys
