@@ -1,11 +1,20 @@
 import logging
 
 
+class logger_level:
+    CRITICAL = 50
+    FATAL = CRITICAL
+    ERROR = 40
+    WARNING = 30
+    WARN = WARNING
+    INFO = 20
+    DEBUG = 10
+    NOTSET = 0
 class logger_class:
     def __init__(self) -> None:
         self.__logger = logging.getLogger("root")
 
-    def init_logger(self, logger_name,use_logfile=False, logfile_path="jcmlog.log", log_format="|%(asctime)s - %(levelname)s|->%(message)s", data_format="%Y/%m/%d %H:%M:%S", log_level=logging.DEBUG):
+    def init_logger(self, logger_name,use_logfile=False, logfile_path="jcmlog.log", log_format="|%(asctime)s - %(levelname)s|->%(message)s", data_format="%Y/%m/%d %H:%M:%S", log_level=logger_level.DEBUG):
         self.__logger = logging.getLogger(logger_name)
         if use_logfile:
             fh = logging.FileHandler(
