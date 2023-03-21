@@ -25,11 +25,11 @@ class logger_class:
         self.__logger.info(msg,*args)
     def debug(self,msg,*args):
         self.__logger.debug(msg,*args)
-    def warn(self,msg,*args):
+    def warning(self,msg,*args):
         self.__logger.warn(msg,*args)
     def error(self,msg,*args):
         self.__logger.error(msg,*args)
-    def fatal(self,msg,*args):
+    def critical(self,msg,*args):
         self.__logger.fatal(msg,*args)
 
 

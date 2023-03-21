@@ -1,49 +1,31 @@
 import jcmwave
 import numpy as np
-import logging
+from .logger import logger
 import matplotlib.pyplot as plt
 import os
 
 
 class solver:
-    def __init__(self, jcmp_path, database_path, keys, use_log_file, logfile_path="./jcmsolver.log", log_level=logging.DEBUG) -> None:
+    def __init__(self, jcmp_path, database_path, keys):
         # 初始化成员变量
         self.jcmp_path = jcmp_path
         self.keys = keys
-        self.logfile_path = logfile_path
         abs_resultbag_dir = os.path.join(os.getcwd(), database_path)
         self.resultbag = jcmwave.Resultbag(abs_resultbag_dir)
-        LOG_FORMAT = "|%(asctime)s - %(levelname)s|->%(message)s"
-        DATA_FROMAT = "%Y/%m/%d %H:%M:%S"
-
-        # 初始化log
-        if not use_log_file:
-            logging.basicConfig(format=LOG_FORMAT,
-                                datefmt=DATA_FROMAT, level=log_level)
-        else:
-            logging.basicConfig(
-                filename=logfile_path, format=LOG_FORMAT, datefmt=DATA_FROMAT, level=log_level)
-        logger = logging.getLogger('solver')
-        self.logger = logger
-        logger.info("logging started!")
-        logger.info("logging parameters are listed as follow:")
-        logger.info("jcmp_path = %s", jcmp_path)
-        logger.info("database_path = %s", database_path)
-        logger.info("logfile_path = %s", logfile_path)
-        logger.info("log_level = %d", log_level)
         self.has_inited = True
+        logger.info("solver inited")
+        logger.debug(f"solver parameters:jcmp_path-{jcmp_path};database_path-{jcmp_path}")
 
     def solve(self):
         # 检查是否被以被初始化，若还未被初始化则报错
         try:
             if self.has_inited:
-                self.logger.debug("solver class have been inited")
+                logger.debug("solver class have been inited")
         except NameError:
             print("Error ! please init solver befor using it!!!!!!")
             raise Exception("Please init solver before using it")
 
         # 初始化变量
-        logger = self.logger
         job_ids = []
         waiting_keys = self.keys
         no_error = False
@@ -92,7 +74,6 @@ class solver:
         logger.info("analyse complete ! No error report ! solve mission done!!")
 
     def show_image(self, key, num_of_result, is_light_intense=False):
-        logger = self.logger
         if not self.resultbag.check_result(key):
             logger.error("get result failed! target key not find")
             logger.error(f"the key is : {key}")
@@ -115,7 +96,6 @@ class solver:
         return self.resultbag.get_result(key)
 
     def save_image(self, target_directory, key, num_of_result, is_light_intense=False):
-        logger = self.logger
         if not self.resultbag.check_result(key):
             logger.error("get result failed! target key not find")
             logger.error(f"the key is : {key}")
@@ -139,7 +119,6 @@ class solver:
                     bbox_inches='tight', pad_inches=0)
 
     def save_all_image(self, num_of_result, target_directory, is_light_intense=False, is_symmetry=False):
-        logger = self.logger
         if not self.resultbag.check_result(self.keys[0]):
             logger.error("get result failed! target key not find")
             logger.error(f"the key is : {self.keys[0]}")
