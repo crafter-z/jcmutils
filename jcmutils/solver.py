@@ -43,7 +43,7 @@ class solver:
             logger.info("solver program completed! analysing results...")
             no_error = True
 
-            # 提取错误信息，如果是mmo错误则加入队列重新计算
+            # 提取错误信息，如果是oom错误则加入队列重新计算
             backup_keys = []
             for key in waiting_keys:
                 jcm_log = self.resultbag.get_log(key)
@@ -67,7 +67,7 @@ class solver:
                     raise Exception(
                         "Unknown error occoured while solving projects! please check the log file")
 
-            # 如果出现了mmo错误，替换队列，再次计算
+            # 如果出现了oom错误，替换队列，再次计算
             if not no_error:
                 waiting_keys = backup_keys
 
