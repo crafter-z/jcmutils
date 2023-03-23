@@ -11,7 +11,7 @@ class solver:
         # 初始化成员变量
         self.jcmp_path = jcmp_path
         self.keys = keys
-        if (database_path[0] is '~') or os.path.isabs(database_path):
+        if os.path.isabs(database_path):
             abs_resultbag_dir = database_path
         else:
             abs_resultbag_dir = os.path.join(os.getcwd(), database_path)
