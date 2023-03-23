@@ -3,6 +3,7 @@ import numpy as np
 from .logger import logger
 import matplotlib.pyplot as plt
 import os
+import shutil
 
 
 class solver:
@@ -181,3 +182,11 @@ class solver:
                 res += f"{value}-"
         res.rstrip('-')
         return res
+
+    def move_total_results(self,root_dir,target_dir):
+        dirlist = os.listdir(root_dir)
+        for dir in dirlist:
+            filelist = os.listdir(os.path.join(root_dir,dir))
+            for file in filelist:
+                if file == "total_result.jpg":
+                    shutil.copyfile(os.path.join(root_dir,dir,file),os.path.join(target_dir,dir+".jpg"))
