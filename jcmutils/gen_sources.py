@@ -42,8 +42,6 @@ def gen_kohler_sources(maxtheta, phi0, spacing, lambda0, flag_is_symmetry=False)
     # p方向的分量就是cos(PHI-psi0),s方向的分量就是sin(PHI-psi0),PHI是指入射光方位角。psi0是偏振方向与x轴夹角
     for key in keys:
         key['SP'] = [np.sin(key['thetaphi'][1] - phi0),np.cos(key['thetaphi'][1] - phi0)]
-        key['SP'][0] = key['SP'][0]*np.power(np.cos(key['thetaphi'][0]),-1.0/2)
-        key['SP'][1] = key['SP'][1]*np.power(np.cos(key['thetaphi'][0]),-1.0/2)
         key['thetaphi'][0] = np.rad2deg(key['thetaphi'][0])
         key['thetaphi'][1] = np.rad2deg(key['thetaphi'][1])
         logger.debug(f"key->{key} was successfully generated")
