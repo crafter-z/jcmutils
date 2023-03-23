@@ -20,7 +20,7 @@ class solver:
         self.resultbag = jcmwave.Resultbag(abs_resultbag_dir)
         self.has_inited = True
         logger.info("solver inited")
-        logger.debug(f"solver parameters:jcmp_path-{jcmp_path};database_path-{jcmp_path}")
+        logger.debug(f"solver parameters:jcmp_path-{jcmp_path};database_path-{abs_resultbag_dir}")
 
     def solve(self):
         # 检查是否被以被初始化，若还未被初始化则报错
