@@ -15,6 +15,8 @@ class solver:
             abs_resultbag_dir = database_path
         else:
             abs_resultbag_dir = os.path.join(os.getcwd(), database_path)
+        if not os.path.exists(os.path.dirname(database_path)):
+            os.makedirs(os.path.dirname(database_path))
         self.resultbag = jcmwave.Resultbag(abs_resultbag_dir)
         self.has_inited = True
         logger.info("solver inited")
@@ -113,7 +115,7 @@ class solver:
             field = np.power(field, 2)
         if not os.path.exists(target_directory):
             logger.debug("target directory dosen't exist,creating...")
-            os.mkdir(target_directory)
+            os.makedirs(target_directory)
         plt.cla()
         plt.pcolormesh(field[num_of_result]['X'], field[num_of_result]['Y'],
                        field, shading='gouraud', cmap='gray')
@@ -147,7 +149,7 @@ class solver:
 
             if not os.path.exists(target_directory):
                 logger.debug("target directory dosen't exist,creating...")
-                os.mkdir(target_directory)
+                os.makedirs(target_directory)
             file_name = target_directory.rstrip(
                 '/') + '/' + self.__solve_dict(key) + ".jpg"
             plt.cla()
@@ -190,4 +192,6 @@ class solver:
         filelist = os.listdir(root_dir)
         for file in filelist:
             if file == "total_result.jpg":
+                if not os.path.exists(target_dir):
+                    os.makedirs(target_dir)
                 shutil.copyfile(os.path.join(root_dir,file),os.path.join(target_dir,os.path.basename(root_dir) + ".jpg"))
