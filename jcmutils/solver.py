@@ -79,7 +79,7 @@ class solver:
 
         logger.info("analyse complete ! No error report ! solve mission done!!")
 
-    def show_image(self, key, num_of_result, is_light_intense=False):
+    def show_image(self, key, num_of_result, is_light_intense=False,vmax=None):
         if not self.resultbag.check_result(key):
             logger.error("get result failed! target key not find")
             logger.error(f"the key is : {key}")
@@ -94,14 +94,18 @@ class solver:
         plt.cla()
         plt.axis('square')
         plt.axis('off')
-        plt.pcolormesh(field[num_of_result]['X'], field[num_of_result]['Y'],
+        if(vmax is None):
+            plt.pcolormesh(field[num_of_result]['X'], field[num_of_result]['Y'],
                        field, shading='gouraud', cmap='gray')
+        else:
+            plt.pcolormesh(field[num_of_result]['X'], field[num_of_result]['Y'],
+                       field, shading='gouraud', cmap='gray',vmax=vmax)
         plt.show()
 
     def get_result(self, key):
         return self.resultbag.get_result(key)
 
-    def save_image(self, target_directory, key, num_of_result, is_light_intense=False):
+    def save_image(self, target_directory, key, num_of_result, is_light_intense=False,vmax=None):
         if not self.resultbag.check_result(key):
             logger.error("get result failed! target key not find")
             logger.error(f"the key is : {key}")
@@ -117,14 +121,18 @@ class solver:
             logger.debug("target directory dosen't exist,creating...")
             os.makedirs(target_directory)
         plt.cla()
-        plt.pcolormesh(field[num_of_result]['X'], field[num_of_result]['Y'],
+        if(vmax is None):
+            plt.pcolormesh(field[num_of_result]['X'], field[num_of_result]['Y'],
                        field, shading='gouraud', cmap='gray')
+        else:
+            plt.pcolormesh(field[num_of_result]['X'], field[num_of_result]['Y'],
+                       field, shading='gouraud', cmap='gray',vmax=vmax)
         plt.axis('square')
         plt.axis('off')
         plt.savefig(target_directory.rstrip("/") + "output.jpg",
                     bbox_inches='tight', pad_inches=0)
 
-    def save_all_image(self, num_of_result, target_directory, is_light_intense=False, is_symmetry=False):
+    def save_all_image(self, num_of_result, target_directory, is_light_intense=False, is_symmetry=False,vmax=None):
         if not self.resultbag.check_result(self.keys[0]):
             logger.error("get result failed! target key not find")
             logger.error(f"the key is : {self.keys[0]}")
@@ -165,8 +173,13 @@ class solver:
                 logger.debug("key was rotated for symmetry")
 
         plt.cla()
-        plt.pcolormesh(temp_result[num_of_result]['X'], temp_result[num_of_result]['Y'],
+        if(vmax is None):
+            plt.pcolormesh(temp_result[num_of_result]['X'], temp_result[num_of_result]['Y'],
                        total_results, shading='gouraud', cmap='gray')
+        else:
+            plt.pcolormesh(temp_result[num_of_result]['X'], temp_result[num_of_result]['Y'],
+                       total_results, shading='gouraud', cmap='gray',vmax=vmax)
+        logger.debug(f"printing max value of results:{max(total_results)}")
         plt.axis('square')
         plt.axis('off')
         file_name = target_directory.rstrip('/') + '/' + "total_result.jpg"
