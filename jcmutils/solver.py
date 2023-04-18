@@ -1,9 +1,9 @@
 import jcmwave
 import numpy as np
 from .logger import logger
-import matplotlib.pyplot as plt
 import os
 import shutil
+import cv2
 
 
 class solver:
@@ -91,16 +91,10 @@ class solver:
                  result[num_of_result]['field'][0]).sum(axis=2).real
         if is_light_intense:
             field = np.power(field, 2)
-        plt.cla()
-        plt.axis('square')
-        plt.axis('off')
-        if(vmax is None):
-            plt.pcolormesh(field[num_of_result]['X'], field[num_of_result]['Y'],
-                       field, shading='gouraud', cmap='gray')
-        else:
-            plt.pcolormesh(field[num_of_result]['X'], field[num_of_result]['Y'],
-                       field, shading='gouraud', cmap='gray',vmax=vmax)
-        plt.show()
+        vmaxa = np.max(field) if vmax is None else vmax
+        field = (field / vmaxa)*255
+        field = np.rot90(field)
+        cv2.imshow("image",field)
 
     def get_result(self, key):
         return self.resultbag.get_result(key)
@@ -120,17 +114,10 @@ class solver:
         if not os.path.exists(target_directory):
             logger.debug("target directory dosen't exist,creating...")
             os.makedirs(target_directory)
-        plt.cla()
-        if(vmax is None):
-            plt.pcolormesh(field[num_of_result]['X'], field[num_of_result]['Y'],
-                       field, shading='gouraud', cmap='gray')
-        else:
-            plt.pcolormesh(field[num_of_result]['X'], field[num_of_result]['Y'],
-                       field, shading='gouraud', cmap='gray',vmax=vmax)
-        plt.axis('square')
-        plt.axis('off')
-        plt.savefig(target_directory.rstrip("/") + "output.jpg",
-                    bbox_inches='tight', pad_inches=0)
+        vmaxa = np.max(field) if vmax is None else vmax
+        field = (field / vmaxa)*255
+        field = np.rot90(field)
+        cv2.imwrite(target_directory.rstrip("/")+"output.jpg",field)
 
     def save_all_image(self, num_of_result, target_directory, is_light_intense=False, is_symmetry=False,vmax=None):
         if not self.resultbag.check_result(self.keys[0]):
@@ -160,30 +147,22 @@ class solver:
                 os.makedirs(target_directory)
             file_name = target_directory.rstrip(
                 '/') + '/' + self.__solve_dict(key) + ".jpg"
-            plt.cla()
-            plt.pcolormesh(result[num_of_result]['X'], result[num_of_result]['Y'],
-                           field, shading='gouraud', cmap='gray')
-            plt.axis('square')
-            plt.axis('off')
-            plt.savefig(file_name, bbox_inches='tight', pad_inches=0)
+            vmaxa = np.max(field) if vmax is None else vmax
+            field = (field / vmaxa)*255
+            field = np.rot90(field)
+            cv2.imwrite(file_name,field)
             logger.debug(f"key {key} successfully saved")
             if is_symmetry and not (key['thetaphi'][0] == 0 and key['thetaphi'][1] == 0):
                 field = np.rot90(field, 2)
                 total_results += field
                 logger.debug("key was rotated for symmetry")
 
-        plt.cla()
-        if(vmax is None):
-            plt.pcolormesh(temp_result[num_of_result]['X'], temp_result[num_of_result]['Y'],
-                       total_results, shading='gouraud', cmap='gray')
-        else:
-            plt.pcolormesh(temp_result[num_of_result]['X'], temp_result[num_of_result]['Y'],
-                       total_results, shading='gouraud', cmap='gray',vmax=vmax)
-        logger.debug(f"printing max value of results:{max(total_results)}")
-        plt.axis('square')
-        plt.axis('off')
+        vmaxa = np.max(field) if vmax is None else vmax
+        field = (field / vmaxa)*255
+        field = np.rot90(field)
+        logger.debug(f"printing max value of results:{np.max(total_results)}")
         file_name = target_directory.rstrip('/') + '/' + "total_result.jpg"
-        plt.savefig(file_name, bbox_inches='tight', pad_inches=0)
+        cv2.imwrite(file_name,field)
         logger.info("all target image saved completed!")
 
     def __solve_dict(self, target_dict):

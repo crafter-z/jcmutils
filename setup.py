@@ -1,6 +1,6 @@
 from setuptools import setup,find_packages
 
-VERSION = '1.2.0'
+VERSION = '1.3.0'
 DESCRIPTION = "A general utils for jcmsuite"
 
 setup(
@@ -10,7 +10,7 @@ setup(
     author_email="crafterz@163.com",
     description=DESCRIPTION,
     packages=find_packages(),
-    install_requires=["numpy","matplotlib"],
+    install_requires=["numpy","matplotlib","opencv"],
     keywords=["jcmsuite","utils"],
     classifiers=[
     "Programming Language :: Python :: 3",
