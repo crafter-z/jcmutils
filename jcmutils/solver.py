@@ -148,9 +148,9 @@ class solver:
             file_name = target_directory.rstrip(
                 '/') + '/' + self.__solve_dict(key) + ".jpg"
             vmaxa = np.max(field) if vmax is None else vmax
-            field = (field / vmaxa)*255
             field = np.rot90(field)
-            cv2.imwrite(file_name,field)
+            save_field = (field / vmaxa)*255
+            cv2.imwrite(file_name,save_field)
             logger.debug(f"key {key} successfully saved")
             if is_symmetry and not (key['thetaphi'][0] == 0 and key['thetaphi'][1] == 0):
                 field = np.rot90(field, 2)
@@ -160,7 +160,6 @@ class solver:
         logger.debug(f"printing max value of results:{np.max(total_results)}")
         vmaxa = np.max(total_results) if vmax is None else vmax
         field = (total_results/ vmaxa)*255
-        field = np.rot90(field)
         file_name = target_directory.rstrip('/') + '/' + "total_result.jpg"
         cv2.imwrite(file_name,field)
         logger.info("all target image saved completed!")
