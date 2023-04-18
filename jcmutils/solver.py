@@ -157,10 +157,10 @@ class solver:
                 total_results += field
                 logger.debug("key was rotated for symmetry")
 
-        vmaxa = np.max(field) if vmax is None else vmax
-        field = (field / vmaxa)*255
-        field = np.rot90(field)
         logger.debug(f"printing max value of results:{np.max(total_results)}")
+        vmaxa = np.max(total_results) if vmax is None else vmax
+        field = (total_results/ vmaxa)*255
+        field = np.rot90(field)
         file_name = target_directory.rstrip('/') + '/' + "total_result.jpg"
         cv2.imwrite(file_name,field)
         logger.info("all target image saved completed!")
