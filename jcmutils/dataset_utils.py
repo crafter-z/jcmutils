@@ -48,7 +48,7 @@ class datagen:
         afield = np.rot90(afield)
 
         # 通过每个像素点代表的实际物理尺寸来计算缩放比比例
-        scale_factor =target_density*1.0/source_density
+        scale_factor =source_density*1.0/target_density
         # 缩放电场/光强场到对应的大小
         scaled_field = cv2.resize(total_results, None, fx=scale_factor,# type: ignore
                                   fy=scale_factor, interpolation=cv2.INTER_LINEAR)  
