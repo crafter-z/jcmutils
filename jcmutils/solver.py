@@ -135,23 +135,25 @@ class solver:
 
         # 开始逐个提取结果
         for key in self.keys:
-            result = self.resultbag.get_result(key)
-            field = (result[num_of_result]['field'][0].conj() *
-                     result[num_of_result]['field'][0]).sum(axis=2).real
-            if is_light_intense:
-                field = np.power(field, 2)
-            total_results += field
-
+            # 目录检查
             if not os.path.exists(target_directory):
                 logger.debug("target directory dosen't exist,creating...")
                 os.makedirs(target_directory)
             file_name = target_directory.rstrip(
                 '/') + '/' + self.__solve_dict(key) + ".jpg"
-            vmaxa = np.max(field) if vmax is None else vmax
+
+            # 获得结果
+            result = self.resultbag.get_result(key)
+            field = (result[num_of_result]['field'][0].conj() *
+                     result[num_of_result]['field'][0]).sum(axis=2).real
+            if is_light_intense:
+                field = np.power(field, 2)
+
             field = np.rot90(field)
-            save_field = (field / vmaxa)*255
+            save_field = (field / np.max(field))*255
             cv2.imwrite(file_name,save_field)
             logger.debug(f"key {key} successfully saved")
+            total_results += field
             if is_symmetry and not (key['thetaphi'][0] == 0 and key['thetaphi'][1] == 0):
                 field = np.rot90(field, 2)
                 total_results += field
@@ -159,9 +161,9 @@ class solver:
 
         logger.debug(f"printing max value of results:{np.max(total_results)}")
         vmaxa = np.max(total_results) if vmax is None else vmax
-        field = (total_results/ vmaxa)*255
+        sfield = (total_results/ vmaxa)*255
         file_name = target_directory.rstrip('/') + '/' + "total_result.jpg"
-        cv2.imwrite(file_name,field)
+        cv2.imwrite(file_name,sfield)
         logger.info("all target image saved completed!")
 
     def __solve_dict(self, target_dict):
