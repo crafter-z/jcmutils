@@ -43,18 +43,18 @@ class datagen:
                 total_results += field
                 logger.debug("key was rotated for symmetry")
 
-        # 通过每个像素点代表的实际物理尺寸来计算缩放比比例
-        scale_factor = source_density*1.0/target_density
         vmaxa = np.max(total_results) if vmax is None else vmax
-        field = (total_results/ vmaxa)*255
-        field = np.rot90(field)
+        afield = (total_results/ vmaxa)*235
+        afield = np.rot90(afield)
 
+        # 通过每个像素点代表的实际物理尺寸来计算缩放比比例
+        scale_factor =target_density*1.0/source_density
         # 缩放电场/光强场到对应的大小
-        scaled_field = cv2.resize(field, None, fx=scale_factor,# type: ignore
+        scaled_field = cv2.resize(total_results, None, fx=scale_factor,# type: ignore
                                   fy=scale_factor, interpolation=cv2.INTER_LINEAR)  
+
 
         # 绘图
         logger.debug(f"printing max value of results:{np.max(total_results)}")
-        file_name =target_filename.rstrip('/') + '/' + "total_result.jpg"
-        cv2.imwrite(file_name,scaled_field)
+        cv2.imwrite(target_filename,scaled_field)
         logger.info("all target image saved completed!")

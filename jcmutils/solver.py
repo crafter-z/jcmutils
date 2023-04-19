@@ -92,7 +92,7 @@ class solver:
         if is_light_intense:
             field = np.power(field, 2)
         vmaxa = np.max(field) if vmax is None else vmax
-        field = (field / vmaxa)*255
+        field = (field / vmaxa)*235
         field = np.rot90(field)
         cv2.imshow("image",field)
 
@@ -115,7 +115,7 @@ class solver:
             logger.debug("target directory dosen't exist,creating...")
             os.makedirs(target_directory)
         vmaxa = np.max(field) if vmax is None else vmax
-        field = (field / vmaxa)*255
+        field = (field / vmaxa)*235
         field = np.rot90(field)
         cv2.imwrite(target_directory.rstrip("/")+"output.jpg",field)
 
@@ -150,7 +150,7 @@ class solver:
                 field = np.power(field, 2)
 
             field = np.rot90(field)
-            save_field = (field / np.max(field))*255
+            save_field = (field / np.max(field))*235
             cv2.imwrite(file_name,save_field)
             logger.debug(f"key {key} successfully saved")
             total_results += field
@@ -161,7 +161,7 @@ class solver:
 
         logger.debug(f"printing max value of results:{np.max(total_results)}")
         vmaxa = np.max(total_results) if vmax is None else vmax
-        sfield = (total_results/ vmaxa)*255
+        sfield = (total_results/ vmaxa)*235
         file_name = target_directory.rstrip('/') + '/' + "total_result.jpg"
         cv2.imwrite(file_name,sfield)
         logger.info("all target image saved completed!")
