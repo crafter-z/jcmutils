@@ -211,4 +211,4 @@ class solver:
         return datetime.datetime.now()
     
     def __count_time(self,last_time):
-        return datetime.timedelta(datetime.datetime.now() - last_time)
+        return datetime.datetime.now() - last_time
