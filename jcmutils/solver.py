@@ -157,7 +157,7 @@ class solver:
                 total_results += field
                 logger.debug("key was rotated for symmetry")
 
-        logger.debug(f"printing max value of results:{np.max(total_results)}")
+        logger.info(f"printing max value of results:{np.max(total_results)}")
         vmaxa = np.max(total_results) if vmax is None else vmax
         sfield = (total_results/ vmaxa)*235
         file_name = target_directory.rstrip('/') + '/' + "total_result.jpg"
