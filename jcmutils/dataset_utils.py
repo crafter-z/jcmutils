@@ -82,7 +82,7 @@ class datagen:
 
         # 确定缺陷在原始图像中的位置
         xpos = self.keys[0]['defectpos'][0] * 1.0/( origin_size['x'][1] - origin_size['x'][0]) * origin_image_size[0]
-        ypos = origin_image_size-(self.keys[0]['defectpos'][1] * 1.0/(origin_size['y'][1] - origin_size['y'][0]) * origin_image_size[1])
+        ypos = origin_image_size[1]-(self.keys[0]['defectpos'][1] * 1.0/(origin_size['y'][1] - origin_size['y'][0]) * origin_image_size[1])
         shift_pix = defect_size*1.0/source_density
         roi = [xpos - shift_pix , xpos + shift_pix, ypos - shift_pix ,ypos + shift_pix]
         roi = np.ceil(roi)
