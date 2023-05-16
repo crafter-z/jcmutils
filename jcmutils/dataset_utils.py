@@ -81,8 +81,8 @@ class datagen:
         afield = np.rot90(afield)
 
         # 确定缺陷在原始图像中的位置
-        xpos = self.keys['defectpos'][0] * 1.0/( origin_size['x'][1] - origin_size['x'][0]) * origin_image_size[0]
-        ypos = origin_image_size-(self.keys['defectpos'][1] * 1.0/(origin_size['y'][1] - origin_size['y'][0]) * origin_image_size[1])
+        xpos = self.keys[0]['defectpos'][0] * 1.0/( origin_size['x'][1] - origin_size['x'][0]) * origin_image_size[0]
+        ypos = origin_image_size-(self.keys[0]['defectpos'][1] * 1.0/(origin_size['y'][1] - origin_size['y'][0]) * origin_image_size[1])
         roi = np.ceil([xpos - defect_size*1.0/source_density,xpos + defect_size*1.0/source_density,ypos - defect_size*1.0/source_density,ypos+defect_size*1.0/source_density])
 
         # 保存
