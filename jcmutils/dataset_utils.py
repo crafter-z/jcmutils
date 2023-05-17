@@ -44,11 +44,11 @@ class datagen:
             template_path = nodefect_phi0_90
         else:
             template_path = nodefect_phi0_0
-        template_image = cv2.imread(template_path)
+        template_image = cv2.imread(template_path,cv2.IMREAD_GRAYSCALE)
         origin_image_size = template_image.shape
         
         # 确定缺陷类别
-        defect_class = 0
+        defect_class = 2
         if "instruction" in target_filename:
             defect_class = 0
         elif "particle" in target_filename:
@@ -81,16 +81,17 @@ class datagen:
         afield = np.rot90(afield)
 
         # 确定缺陷在原始图像中的位置
-        xpos = self.keys[0]['defectpos'][0] * 1.0/( origin_size['x'][1] - origin_size['x'][0]) * origin_image_size[0]
-        ypos = origin_image_size[1]-(self.keys[0]['defectpos'][1] * 1.0/(origin_size['y'][1] - origin_size['y'][0]) * origin_image_size[1])
+        xpos = (self.keys[0]['defectpos'][0] - origin_size['x'][0])* 1.0/( origin_size['x'][1] - origin_size['x'][0]) * origin_image_size[0]
+        ypos = origin_image_size[1]-((self.keys[0]['defectpos'][1] - origin_size['y'][0]) * 1.0/(origin_size['y'][1] - origin_size['y'][0]) * origin_image_size[1])
         shift_pix = defect_size*1.0/source_density
         roi = [xpos - shift_pix , xpos + shift_pix, ypos - shift_pix ,ypos + shift_pix]
         roi = np.ceil(roi)
+        roi = roi.astype(np.int32)
 
         # 保存
         defect_image = afield
         output_image = template_image
-        output_image[roi[0]:roi[1],roi[2]:roi[3]] = defect_image[roi[0]:roi[1],roi[2]:roi[3]]
+        output_image[roi[2]:roi[3],roi[0]:roi[1]] = defect_image[roi[2]:roi[3],roi[0]:roi[1]]
         label_name = target_filename + ".txt"
         with open(label_name,"w") as f:
             f.write(f"{defect_class} {xpos/origin_image_size[0]} {ypos/origin_image_size[1]} {defect_size*2/origin_image_size[0]} {defect_size*2/origin_image_size[1]}")
@@ -101,7 +102,7 @@ class datagen:
         # 通过每个像素点代表的实际物理尺寸来计算缩放比比例
         scale_factor =source_density*1.0/target_density
         # 缩放电场/光强场到对应的大小
-        scaled_field = cv2.resize(afield, None, fx=scale_factor,# type: ignore
+        scaled_field = cv2.resize(output_image, None, fx=scale_factor,# type: ignore
                                   fy=scale_factor, interpolation=cv2.INTER_LINEAR)  
 
         # 绘图
