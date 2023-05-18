@@ -127,8 +127,8 @@ class datagen:
         (_, thresh) = cv2.threshold(blurred, 60 , 255, cv2.THRESH_BINARY)
         kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (18, 18))
         closed = cv2.morphologyEx(thresh, cv2.MORPH_CLOSE, kernel)
-        closed = cv2.erode(closed, None, iterations=4)
-        closed = cv2.dilate(closed, None, iterations=4)
+        closed = cv2.erode(closed, None, iterations=6)
+        closed = cv2.dilate(closed, None, iterations=6)
 
         # 找距离图像中心点最近的一个封闭区域
         (cnts, _) = cv2.findContours(closed.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
