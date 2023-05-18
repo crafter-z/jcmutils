@@ -201,7 +201,7 @@ class datagen:
         xpos = (x + w/2)/image_shape[1]
         ypos = (y + h/2)/image_shape[0]
         width = w/image_shape[1]
-        height = y/image_shape[1]
+        height = h/image_shape[1]
         return (output_img,(xpos,ypos,width,height))
 
     # def export_database_old(self, num_of_result, source_density, target_density,target_filename, vmax, is_light_intense=True, is_symmetry=False):
