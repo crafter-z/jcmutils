@@ -174,8 +174,12 @@ class datagen:
         output_img[y:y+h,x:x+w] = defect_img[y:y+h,x:x+w]
 
         diff_img = diff_img
-        for i in range(x-gap_length,x+w+gap_length - 1):
-            for j in range(y- gap_length,y+h+gap_length - 1):
+        x_lower_border = max(0,x - gap_length)
+        x_upper_border = min(image_shape[1] - 1,x + w + gap_length - 1)
+        y_lower_border = max(0,y - gap_length)
+        y_upper_border = min(image_shape[0] - 1,y + h + gap_length - 1)
+        for i in range(x_lower_border,x_upper_border):
+            for j in range(y_lower_border,y_upper_border):
                 if not (np.abs(i - x - w/2 + 0.5) < w/2 and np.abs(j - y - h/2 +0.5) < h/2):
                     # 计算点到矩形边界的距离
                     distances = []
