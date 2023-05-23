@@ -125,8 +125,8 @@ class datagen:
         gradient = cv2.convertScaleAbs(gradient)
         blurred = cv2.blur(gradient, (5, 5),borderType=cv2.BORDER_REFLECT) 
         (_, thresh) = cv2.threshold(blurred, 55 , 255, cv2.THRESH_BINARY)
-        kernel = cv2.getStructuringElement(cv2.MORPH_CROSS, (13, 13))
-        closed = cv2.morphologyEx(thresh, cv2.MORPH_CLOSE, kernel,iterations=3,borderType=cv2.BORDER_ISOLATED)
+        kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (11, 11))
+        closed = cv2.morphologyEx(thresh, cv2.MORPH_CLOSE, kernel,iterations=2,borderType=cv2.BORDER_ISOLATED)
         closed = cv2.erode(closed, None, iterations=6)
         closed = cv2.dilate(closed, None, iterations=7)
 
