@@ -123,12 +123,12 @@ class datagen:
         # subtract the y-gradient from the x-gradient
         gradient = cv2.subtract(gradX, gradY)
         gradient = cv2.convertScaleAbs(gradient)
-        blurred = cv2.blur(gradient, (9, 9)) 
-        (_, thresh) = cv2.threshold(blurred, 60 , 255, cv2.THRESH_BINARY)
-        kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (18, 18))
-        closed = cv2.morphologyEx(thresh, cv2.MORPH_CLOSE, kernel)
+        blurred = cv2.blur(gradient, (5, 5),borderType=cv2.BORDER_REFLECT) 
+        (_, thresh) = cv2.threshold(blurred, 55 , 255, cv2.THRESH_BINARY)
+        kernel = cv2.getStructuringElement(cv2.MORPH_CROSS, (13, 13))
+        closed = cv2.morphologyEx(thresh, cv2.MORPH_CLOSE, kernel,iterations=3,borderType=cv2.BORDER_ISOLATED)
         closed = cv2.erode(closed, None, iterations=6)
-        closed = cv2.dilate(closed, None, iterations=6)
+        closed = cv2.dilate(closed, None, iterations=7)
 
         # 找距离图像中心点最近的一个封闭区域
         (cnts, _) = cv2.findContours(closed.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
