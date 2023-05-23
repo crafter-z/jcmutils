@@ -22,6 +22,57 @@ class datagen:
         logger.debug(
             f"jcmp_path is {jcmp_path},database_path is {abs_resultbag_dir}")
 
+    def export_dataset_one(self, num_of_result, source_density, target_density,target_filename,phi0, vmax, is_light_intense=True, is_symmetry=False):
+        # 路径预处理
+        if not os.path.exists(os.path.dirname(target_filename)):
+            os.makedirs(os.path.dirname(target_filename))
+
+        # 提取无缺陷图像
+        ## 先确定total_result的形状
+        temp_result = self.resultbag.get_result(self.keys[0])
+        field = (temp_result[num_of_result]['field'][0].conj() *
+                 temp_result[num_of_result]['field'][0]).sum(axis=2).real
+        total_results = np.zeros(field.shape)
+        logger.debug(f"total_result shape defined as {total_results.shape}")
+
+        ## 开始逐个提取结果
+        for key in self.keys:
+            result = self.resultbag.get_result(key)
+            field = (result[num_of_result]['field'][0].conj() *
+                     result[num_of_result]['field'][0]).sum(axis=2).real
+            if is_light_intense:
+                field = np.power(field, 2)
+            total_results += field
+            if is_symmetry and not (key['thetaphi'][0] == 0 and key['thetaphi'][1] == 0):
+                field = np.rot90(field, 2)
+                total_results += field
+                logger.debug("key was rotated for symmetry")
+        
+        # 合并最终结果
+        vmaxa = np.max(total_results) if vmax is None else vmax
+        afield = (total_results/ vmaxa)*235
+        afield = np.rot90(afield)
+
+        label_name = target_filename + ".txt"
+        with open(label_name,"w") as f:
+            f.write("")
+
+        # 保存超分辨（原图）
+        cv2.imwrite(target_filename + "_origin.jpg",afield)
+
+        # 通过每个像素点代表的实际物理尺寸来计算缩放比比例
+        scale_factor =source_density*1.0/target_density
+        # 缩放电场/光强场到对应的大小
+        scaled_field = cv2.resize(output_image, None, fx=scale_factor,# type: ignore
+                                  fy=scale_factor, interpolation=cv2.INTER_LINEAR)  
+
+        # 绘图
+        logger.debug(f"printing max value of results:{np.max(total_results)}")
+        cv2.imwrite(target_filename + ".jpg",scaled_field)
+        logger.info("all target image saved completed!")
+
+
+
     def export_dataset(self, num_of_result, source_density, target_density,target_filename,phi0,defect_size, vmax, is_light_intense=True, is_symmetry=False):
         # 路径预处理
         if not os.path.exists(os.path.dirname(target_filename)):
@@ -122,13 +173,14 @@ class datagen:
         
         # subtract the y-gradient from the x-gradient
         gradient = cv2.subtract(gradX, gradY)
-        gradient = cv2.convertScaleAbs(gradient)
+        gradient = cv2.convertScaleAbs(gradient)        
+        defect_lowborder = np.max(gradient) * 0.35
         blurred = cv2.blur(gradient, (5, 5),borderType=cv2.BORDER_REFLECT) 
-        (_, thresh) = cv2.threshold(blurred, 55 , 255, cv2.THRESH_BINARY)
+        (_, thresh) = cv2.threshold(blurred, defect_lowborder, 255, cv2.THRESH_BINARY)
         kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (11, 11))
         closed = cv2.morphologyEx(thresh, cv2.MORPH_CLOSE, kernel,iterations=2,borderType=cv2.BORDER_ISOLATED)
-        closed = cv2.erode(closed, None, iterations=6)
-        closed = cv2.dilate(closed, None, iterations=7)
+        closed = cv2.erode(closed, None, iterations=4)
+        closed = cv2.dilate(closed, None, iterations=5)
 
         # 找距离图像中心点最近的一个封闭区域
         (cnts, _) = cv2.findContours(closed.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
