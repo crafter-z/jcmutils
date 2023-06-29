@@ -92,8 +92,8 @@ class datagen:
         height_lower_warn = 0.9*(periodic_y/source_density)/output_image.shape[0]
         width_upper_warn = 1.8*(periodic_x/source_density)/output_image.shape[1]
         height_upper_warn = 1.8*(periodic_y/source_density)/output_image.shape[0]
-        width_upper_border = 2.1*(periodic_x/source_density)/output_image.shape[1]
-        height_upper_border = 2.1*(periodic_y/source_density)/output_image.shape[0]
+        width_upper_border = 2.5*(periodic_x/source_density)/output_image.shape[1]
+        height_upper_border = 2.5*(periodic_y/source_density)/output_image.shape[0]
         # 大致检测结果正确性
         if width <=width_lower_border or height <=height_lower_border :
             logger.error(f"false mixed image detected,key-{self.origin_key} was detected too small width or height. the width is {width},height is {height},which is smaller than ({width_lower_border},{height_lower_border}) , try a smaller signal_level")
