@@ -8,10 +8,11 @@ import random
 
 
 class datagen:
-    def __init__(self, jcmp_path, database_path, keys):
+    def __init__(self, jcmp_path, database_path, keys,origin_key):
         # 初始化成员变量
         self.jcmp_path = jcmp_path
         self.keys = keys
+        self.origin_key = origin_key
         if os.path.isabs(database_path):
             abs_resultbag_dir = database_path
         else:
@@ -95,14 +96,14 @@ class datagen:
         height_upper_border = 2.1*(periodic_y/source_density)/output_image.shape[0]
         # 大致检测结果正确性
         if width <=width_lower_border or height <=height_lower_border :
-            logger.error(f"false mixed image detected,key-{self.keys} was detected too small width or height. the width is {width},height is {height},which is smaller than ({width_lower_border},{height_lower_border}) , try a smaller signal_level")
+            logger.error(f"false mixed image detected,key-{self.origin_key} was detected too small width or height. the width is {width},height is {height},which is smaller than ({width_lower_border},{height_lower_border}) , try a smaller signal_level")
             raise Exception("error detected , please read log")
         if width <= width_lower_warn or height <=height_lower_warn:
-            logger.warning(f"key-{self.keys} mixed image smaller than ({width_lower_warn},{height_lower_warn}) maybe a little bit strage , please check")
+            logger.warning(f"key-{self.origin_key} mixed image smaller than ({width_lower_warn},{height_lower_warn}) maybe a little bit strage , please check")
         if width >= width_upper_warn or height >= height_upper_warn:
-            logger.warning(f"key-{self.keys} mixed image lagger than ({width_upper_warn},{height_upper_warn}) maybe a little bit strage , please check")
+            logger.warning(f"key-{self.origin_key} mixed image lagger than ({width_upper_warn},{height_upper_warn}) maybe a little bit strage , please check")
         if width >= width_upper_border or height >= height_upper_border:
-            logger.error(f"false mixed image detected,key-{self.keys} was detected too big width or height. the width is {width},height is {height},which is larger than ({width_upper_border},{height_upper_border}), try a larger signal_level")
+            logger.error(f"false mixed image detected,key-{self.origin_key} was detected too big width or height. the width is {width},height is {height},which is larger than ({width_upper_border},{height_upper_border}), try a larger signal_level")
             raise Exception("error detected , please read log")
             
 
