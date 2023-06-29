@@ -236,7 +236,7 @@ class datagen:
         x,y,w,h=cv2.boundingRect(c)
 
         # 延伸扩展边界，避免强截断
-        x += extend_length
+        x -= extend_length
         y -= extend_length
         w += extend_length*2
         h += extend_length*2
