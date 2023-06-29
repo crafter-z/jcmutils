@@ -174,7 +174,7 @@ class datagen:
             file_name = target_filename + f"-{i}.jpg"
 
             with open(label_name,"w") as f:
-                f.write(f"{defect_class} {final_positions[i][0]} {final_positions[i][1]} {final_positions[i][2]} {final_positions[i][3]} ")
+                f.write(f"{defect_class} {final_positions[i][0]} {final_positions[i][1]} {final_positions[i][2]} {final_positions[i][3]}")
             cv2.imwrite(file_name,final_images[i])
 
         # 绘图
