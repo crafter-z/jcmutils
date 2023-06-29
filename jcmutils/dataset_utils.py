@@ -4,6 +4,7 @@ import os
 import jcmwave
 import cv2
 import yaml
+import random
 
 
 class datagen:
@@ -21,6 +22,9 @@ class datagen:
         logger.debug("datagen inited,no error reported")
         logger.debug(
             f"jcmp_path is {jcmp_path},database_path is {abs_resultbag_dir}")
+        
+        # 随机初始化
+        random.seed()
 
     def export_dataset_one(self, num_of_result, source_density, target_density,target_filename,phi0, vmax, is_light_intense=True, is_symmetry=False):
         # 路径预处理
@@ -132,6 +136,19 @@ class datagen:
         afield = np.rot90(afield)
 
         (output_image,(xpos,ypos,width,height)) = self.__process_image(afield,template_image,signal_level)
+        
+        # 大致检测结果正确性
+        if width <= 0.12 or height <=0.12 :
+            logger.error(f"false mixed image detected,key-{self.keys} was detected too small width or height. the width is {width},height is {height},which is smaller than 0.12 , try a smaller signal_level")
+            raise Exception("error detected , please read log")
+        if width <= 0.15 or height <=0.15:
+            logger.warning(f"key-{self.keys} mixed image too small, maybe a little bit strage , please check")
+        if width >= 0.32 or height >= 0.32:
+            logger.warning(f"key-{self.keys} mixed image too big maybe a little bit strage , please check")
+        if width >= 0.36 or height >= 0.36:
+            logger.error(f"false mixed image detected,key-{self.keys} was detected too big width or height. the width is {width},height is {height},which is larger than 0.36 , try a larger signal_level")
+            raise Exception("error detected , please read log")
+            
 
         # #####
         # 重要
@@ -194,15 +211,17 @@ class datagen:
         
         # # 保存
         for i in range(len(final_images)):
+            if random.random() > 0.3:
+                continue
             label_name = target_filename + f"-{i}.txt"
+            file_name = target_filename + f"-{i}.jpg"
+
             with open(label_name,"w") as f:
                 f.write(f"{defect_class} {final_positions[i][0]} {final_positions[i][1]} {final_positions[i][2]} {final_positions[i][3]} ")
+            cv2.imwrite(file_name,final_images[i])
 
         # 绘图
         logger.debug(f"printing max value of results:{np.max(total_results)}")
-        for i in range(len(final_images)):
-            file_name = target_filename + f"-{i}.jpg"
-            cv2.imwrite(file_name,final_images[i])
         logger.info("all target image saved completed!")
         
     def __process_image(self,defect_img,template_img,signal_level,smooth_length=30,extend_length = 15):
