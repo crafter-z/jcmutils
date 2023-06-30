@@ -86,10 +86,10 @@ class datagen:
 
         (output_image,(xpos,ypos,width,height)) = self.__process_image(afield,template_image,signal_level)
         
-        lower_border = 0.9*max(periodic_x,periodic_y)/source_density/max(output_image.shape[0],output_image.shape[1])
-        lower_warn = 1.3*max(periodic_x,periodic_y)/source_density/max(output_image.shape[0],output_image.shape[1])
-        upper_warn = 1.9*max(periodic_x,periodic_y)/source_density/max(output_image.shape[0],output_image.shape[1])
-        upper_border = 2.3*max(periodic_x,periodic_y)/source_density/max(output_image.shape[0],output_image.shape[1])
+        lower_border = 1.1*max(periodic_x,periodic_y)/source_density/max(output_image.shape[0],output_image.shape[1])
+        lower_warn = 1.5*max(periodic_x,periodic_y)/source_density/max(output_image.shape[0],output_image.shape[1])
+        upper_warn = 2.0*max(periodic_x,periodic_y)/source_density/max(output_image.shape[0],output_image.shape[1])
+        upper_border = 2.4*max(periodic_x,periodic_y)/source_density/max(output_image.shape[0],output_image.shape[1])
         # 大致检测结果正确性
         if width <=lower_border or height <=lower_border :
             logger.error(f"false mixed image detected,key-{self.origin_key} was detected too small width or height. the width is {width},height is {height},which is smaller than ({lower_border},{lower_border}) , try a smaller signal_level")
