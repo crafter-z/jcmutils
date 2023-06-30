@@ -86,8 +86,8 @@ class datagen:
 
         (output_image,(xpos,ypos,width,height)) = self.__process_image(afield,template_image,signal_level)
         
-        lower_border = 1.1*max(periodic_x,periodic_y)/source_density/max(output_image.shape[0],output_image.shape[1])
-        lower_warn = 1.5*max(periodic_x,periodic_y)/source_density/max(output_image.shape[0],output_image.shape[1])
+        lower_border = 0.6*max(periodic_x,periodic_y)/source_density/max(output_image.shape[0],output_image.shape[1])
+        lower_warn = 1.0*max(periodic_x,periodic_y)/source_density/max(output_image.shape[0],output_image.shape[1])
         upper_warn = 2.0*max(periodic_x,periodic_y)/source_density/max(output_image.shape[0],output_image.shape[1])
         upper_border = 2.4*max(periodic_x,periodic_y)/source_density/max(output_image.shape[0],output_image.shape[1])
         # 大致检测结果正确性
