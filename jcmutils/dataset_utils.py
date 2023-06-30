@@ -86,24 +86,20 @@ class datagen:
 
         (output_image,(xpos,ypos,width,height)) = self.__process_image(afield,template_image,signal_level)
         
-        width_lower_border = 0.6*(periodic_x/source_density)/output_image.shape[1]
-        height_lower_border = 0.6*(periodic_y/source_density)/output_image.shape[0]
-        width_lower_warn = 0.9*(periodic_x/source_density)/output_image.shape[1]
-        height_lower_warn = 0.9*(periodic_y/source_density)/output_image.shape[0]
-        width_upper_warn = 1.8*(periodic_x/source_density)/output_image.shape[1]
-        height_upper_warn = 1.8*(periodic_y/source_density)/output_image.shape[0]
-        width_upper_border = 2.5*(periodic_x/source_density)/output_image.shape[1]
-        height_upper_border = 2.5*(periodic_y/source_density)/output_image.shape[0]
+        lower_border = 0.9*max(periodic_x,periodic_y)/source_density/max(output_image.shape[0],output_image.shape[1])
+        lower_warn = 1.3*max(periodic_x,periodic_y)/source_density/max(output_image.shape[0],output_image.shape[1])
+        upper_warn = 1.9*max(periodic_x,periodic_y)/source_density/max(output_image.shape[0],output_image.shape[1])
+        upper_border = 2.3*max(periodic_x,periodic_y)/source_density/max(output_image.shape[0],output_image.shape[1])
         # 大致检测结果正确性
-        if width <=width_lower_border or height <=height_lower_border :
-            logger.error(f"false mixed image detected,key-{self.origin_key} was detected too small width or height. the width is {width},height is {height},which is smaller than ({width_lower_border},{height_lower_border}) , try a smaller signal_level")
+        if width <=lower_border or height <=lower_border :
+            logger.error(f"false mixed image detected,key-{self.origin_key} was detected too small width or height. the width is {width},height is {height},which is smaller than ({lower_border},{lower_border}) , try a smaller signal_level")
             raise Exception("error detected , please read log")
-        if width <= width_lower_warn or height <=height_lower_warn:
-            logger.warning(f"key-{self.origin_key} mixed image smaller than ({width_lower_warn},{height_lower_warn}) maybe a little bit strage , please check")
-        if width >= width_upper_warn or height >= height_upper_warn:
-            logger.warning(f"key-{self.origin_key} mixed image lagger than ({width_upper_warn},{height_upper_warn}) maybe a little bit strage , please check")
-        if width >= width_upper_border or height >= height_upper_border:
-            logger.error(f"false mixed image detected,key-{self.origin_key} was detected too big width or height. the width is {width},height is {height},which is larger than ({width_upper_border},{height_upper_border}), try a larger signal_level")
+        if width <= lower_warn or height <=lower_warn:
+            logger.warning(f"key-{self.origin_key} mixed image smaller than ({lower_warn},{lower_warn}) maybe a little bit strage , please check")
+        if width >= upper_warn or height >= upper_warn:
+            logger.warning(f"key-{self.origin_key} mixed image lagger than ({upper_warn},{upper_warn}) maybe a little bit strage , please check")
+        if width >= upper_border or height >= upper_border:
+            logger.error(f"false mixed image detected,key-{self.origin_key} was detected too big width or height. the width is {width},height is {height},which is larger than ({upper_border},{upper_border}), try a larger signal_level")
             raise Exception("error detected , please read log")
             
 
@@ -119,7 +115,7 @@ class datagen:
         # 1.微位移
         image_size = output_image.shape
         stored_images = []
-        move_length = np.linspace(0,4,3)
+        move_length = np.linspace(0,target_density/source_density,3,endpoint=False)
         for i in range(len(move_length)):
             for j in range(len(move_length)):
                 M = np.array([[1,0,i],[0,1,j]],dtype=np.float32)
@@ -181,7 +177,7 @@ class datagen:
         logger.debug(f"printing max value of results:{np.max(total_results)}")
         logger.info("all target image saved completed!")
         
-    def __process_image(self,defect_img,template_img,signal_level,smooth_length=30,extend_length = 15):
+    def __process_image(self,defect_img,template_img,signal_level,smooth_length=15,extend_length = 7):
         diff_img = defect_img.astype(np.float32) - template_img.astype(np.float32)
         image_shape = template_img.shape
         # diff_img = (diff_img + 125)
@@ -289,7 +285,7 @@ class datagen:
         xpos = (x + w/2)/image_shape[1]
         ypos = (y + h/2)/image_shape[0]
         width = w/image_shape[1]
-        height = h/image_shape[1]
+        height = h/image_shape[0]
         return (output_img,(xpos,ypos,width,height))
 
     # def export_database_old(self, num_of_result, source_density, target_density,target_filename, vmax, is_light_intense=True, is_symmetry=False):
