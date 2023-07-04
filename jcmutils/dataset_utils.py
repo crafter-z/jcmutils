@@ -124,7 +124,7 @@ class datagen:
                     M = np.array([[1,0,i],[0,1,j]],dtype=np.float32)
                     temp_img.append(cv2.warpAffine(output_image,M,output_image.shape))
 
-            clip_length = np.ceil(target_density/source_density)
+            clip_length = np.uint32(np.ceil(target_density/source_density))
             for i in range(len(temp_img)):
                 temp_img[i] = temp_img[i][clip_length:image_size[0]-clip_length,clip_length:image_size[1]-clip_length]
             
