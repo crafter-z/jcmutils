@@ -28,7 +28,7 @@ class datagen:
         random.seed()
 
  
-    def export_dataset(self, num_of_result,target_density,target_filename,phi0,vmax,signal_level=0.4,noise_level = 5, is_light_intense=True, is_symmetry=False):
+    def export_dataset(self, num_of_result,target_density,target_filename,phi0,vmax,throw_rate = 0.3,is_micro_translate = True,is_rotate = True,is_noise = True,signal_level=0.4,noise_level = 5, is_light_intense=True, is_symmetry=False):
         # 路径预处理
         if not os.path.exists(os.path.dirname(target_filename)):
             os.makedirs(os.path.dirname(target_filename))
@@ -112,66 +112,84 @@ class datagen:
         # ! 添加噪声
         ###########
 
+        stored_images = [output_image]
+        stored_positions = [(xpos,ypos,width,height)]
         # 1.微位移
-        image_size = output_image.shape
-        stored_images = []
-        move_length = np.linspace(0,target_density/source_density,3,endpoint=False)
-        for i in range(len(move_length)):
-            for j in range(len(move_length)):
-                M = np.array([[1,0,i],[0,1,j]],dtype=np.float32)
-                stored_images.append(cv2.warpAffine(output_image,M,output_image.shape))
+        if is_micro_translate:
+            image_size = output_image.shape
+            temp_img = []
+            move_length = np.linspace(0,target_density/source_density,3,endpoint=False)
+            for i in range(len(move_length)):
+                for j in range(len(move_length)):
+                    M = np.array([[1,0,i],[0,1,j]],dtype=np.float32)
+                    temp_img.append(cv2.warpAffine(output_image,M,output_image.shape))
 
-        for i in range(len(stored_images)):
-            stored_images[i] = stored_images[i][5:image_size[0]-5,5:image_size[1]-5]
+            clip_length = np.ceil(target_density/source_density)
+            for i in range(len(temp_img)):
+                temp_img[i] = temp_img[i][clip_length:image_size[0]-clip_length,clip_length:image_size[1]-clip_length]
+            
+            stored_images = temp_img
+            temp_pos = []
+            for i in range(len(temp_img)):
+                temp_pos.append((xpos,ypos,width,height))
+            stored_positions = temp_pos
         
-        # 缩放并旋转
-        backup_positions = (
-            (xpos,ypos,width,height),
-            (1-ypos,xpos,height,width),
-            (1-xpos,1-ypos,width,height),
-            (ypos,1-xpos,height,width),
-        )
-        positions = []
-        scaled_images = []
+        # 旋转
+        if is_rotate:
+            backup_positions = (
+                (xpos,ypos,width,height),
+                (1-ypos,xpos,height,width),
+                (1-xpos,1-ypos,width,height),
+                (ypos,1-xpos,height,width),
+            )
+            temp_pos = []
+            temp_img = []
+            for i,img in enumerate(stored_images):
+                temp_img.append(img)
+                temp_img.append(cv2.rotate(img,cv2.ROTATE_90_CLOCKWISE))
+                temp_img.append(cv2.rotate(img,cv2.ROTATE_180))
+                temp_img.append(cv2.rotate(img,cv2.ROTATE_90_COUNTERCLOCKWISE))
+                temp_pos.append(backup_positions[0])
+                temp_pos.append(backup_positions[1])
+                temp_pos.append(backup_positions[2])
+                temp_pos.append(backup_positions[3])
+            stored_images = temp_img
+            stored_positions = temp_pos
+        
+        # 缩放
         scale_factor =source_density*1.0/target_density
-        for i in range(len(stored_images)):
-            temp_img = cv2.resize(stored_images[i],None,fx=scale_factor,fy=scale_factor,interpolation=cv2.INTER_LINEAR)
+        temp_img = []
+        for img in stored_images:
+            temp_img.append(cv2.resize(img,None,fx=scale_factor,fy=scale_factor,interpolation=cv2.INTER_LINEAR))
+        stored_images = temp_img
 
-            scaled_images.append(temp_img)
-            scaled_images.append(cv2.rotate(temp_img,cv2.ROTATE_90_CLOCKWISE))
-            scaled_images.append(cv2.rotate(temp_img,cv2.ROTATE_180))
-            scaled_images.append(cv2.rotate(temp_img,cv2.ROTATE_90_COUNTERCLOCKWISE))
-            positions.append(backup_positions[0])
-            positions.append(backup_positions[1])
-            positions.append(backup_positions[2])
-            positions.append(backup_positions[3])
-        
-        # 现在缩放并旋转之后的图像和对应的方位信息存在scaled_images和positions里面了
         # 接下来向图像中添加噪声
-        final_images = []
-        final_positions = []
-        # 高斯噪声参数
-        mean = 0
-        sigma = noise_level
-        image_shape= (scaled_images[0].shape[0],scaled_images[0].shape[1])
-        for i in range(len(scaled_images)):
-            for j in range(3):
-                gauss = np.random.normal(mean,sigma,image_shape)
-                temp_image = scaled_images[i] + gauss
-                temp_image = np.clip(temp_image,0,255)
-                final_images.append(temp_image)
-                final_positions.append(positions[i])
-        
+        if is_noise:
+            temp_img = []
+            temp_pos = []
+            # 高斯噪声参数
+            mean = 0
+            sigma = noise_level
+            image_shape= (stored_images[0].shape[0],stored_images[0].shape[1])
+            for i,img in enumerate(stored_images):
+                for j in range(3):
+                    gauss = np.random.normal(mean,sigma,image_shape)
+                    temp_img.append(np.clip(img + gauss,0,255))
+                    temp_pos.append(stored_positions[i])
+            stored_images = temp_img
+            stored_positions = temp_pos
+            
         # # 保存
-        for i in range(len(final_images)):
-            if random.random() > 0.3:
+
+        for i,img in enumerate(stored_images):
+            if random.random() < throw_rate:
                 continue
             label_name = target_filename + f"-{i}.txt"
             file_name = target_filename + f"-{i}.jpg"
 
             with open(label_name,"w") as f:
-                f.write(f"{defect_class} {final_positions[i][0]} {final_positions[i][1]} {final_positions[i][2]} {final_positions[i][3]}")
-            cv2.imwrite(file_name,final_images[i])
+                f.write(f"{defect_class} {stored_positions[i][0]} {stored_positions[i][1]} {stored_positions[i][2]} {stored_positions[i][3]}")
+            cv2.imwrite(file_name,img)
 
         # 绘图
         logger.debug(f"printing max value of results:{np.max(total_results)}")
