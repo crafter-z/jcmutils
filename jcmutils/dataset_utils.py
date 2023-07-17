@@ -169,10 +169,11 @@ class datagen:
             temp_pos = []
             # 高斯噪声参数
             mean = 0
-            sigma = noise_level
+            # 根据峰值信噪比计算高斯噪声的标准差
+            sigma = np.sqrt(255**2/(10**(noise_level/10)))
             image_shape= (stored_images[0].shape[0],stored_images[0].shape[1])
             for i,img in enumerate(stored_images):
-                for j in range(3):
+                for j in range(2):
                     gauss = np.random.normal(mean,sigma,image_shape)
                     temp_img.append(np.clip(img + gauss,0,255))
                     temp_pos.append(stored_positions[i])
