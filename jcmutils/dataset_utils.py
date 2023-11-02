@@ -20,280 +20,190 @@ class datagen:
     :param  origin_key: log所用，用于标记当前的keys是由什么参数生成出来的
     """
 
-    def __init__(self, jcmp_path, database_path, keys, origin_key):
-        # 初始化成员变量
-        self.jcmp_path = jcmp_path
-        self.keys = keys
-        self.origin_key = origin_key
-        if os.path.isabs(database_path):
-            abs_resultbag_dir = database_path
-        else:
-            abs_resultbag_dir = os.path.join(os.getcwd(), database_path)
-        if not os.path.exists(os.path.dirname(database_path)):
-            raise Exception("exporting dataset but resultbag dosen't exist")
-        self.resultbag = jcmwave.Resultbag(abs_resultbag_dir)
+    def __init__(self):
         logger.debug("datagen inited,no error reported")
-        logger.debug(f"jcmp_path is {jcmp_path},database_path is {abs_resultbag_dir}")
-
         # 随机初始化
         random.seed()
 
+    def export_defect_datas(
+        self, template_image, target_image, periodic_info, signal_level, defect_class
+    ):
+        datas = self.__process_image(
+            target_image,
+            template_image,
+            signal_level,
+            periodic_info,
+            defect_class,
+            15,
+            7,
+        )
+        return datas
+
     """主要函数，将每次仿真按数据集的方式进行生成
-    :param  num_of_result: 导出的场是project.jcmp里面的第几个
+    :param  list_of_datas: 从export_defect_datas函数中生成的datas组成的list
+    :param  template_image: 无缺陷的样本图像
+    :param  target_shape: 导出目标图像的分辨率，缩放后的
+    :param  source_density: 原图像一个像素代表多少个纳米
     :param  target_density: 导出目标的一个像素代表target_density*target_density纳米
-    :param  target_filename: 输出数据的目标文件名
-    :param  phi0: 数据的phi0
-    :param  vmax: 以0-vmax的(场强/光强)来对应0-235的像素值
-    :param  signal_level: 信号的强弱，代表判别阈值，影响的是从缺陷图像中提取单个图像时的稳定性
-    :param  is_light_intense: 是否按光强输出，如否则按电场强度输出
-    :param  is_symmetry: 是否是镜像，需要生成的科勒照明光同样启用了is_symmetry
-    
+    :param  target_directory: 输出数据的目标文件夹名
+    :param  periodic_info: 周期性信息，第一位是多少列像素一个周期，第二位是多少行像素一个周期
+    :param  enhance_info: 包含可用数据增强（含噪声信息）的字典
+    :param  defect_num_one_image: 生成的每张图像中要包含多少个缺陷
+    :param  min_required_num: 至少需要生成多少张图像
     
     """
 
     def export_dataset(
         self,
-        num_of_result,
+        list_of_datas,
+        template_image,
+        target_shape,
+        source_density,
         target_density,
-        target_filename,
-        phi0,
-        vmax,
-        throw_rate=0.3,
-        is_micro_translate=True,
-        is_rotate=True,
-        is_noise=True,
-        signal_level=0.4,
-        noise_level=5,
-        is_light_intense=True,
-        is_symmetry=False,
+        target_directory,
+        periodic_info,
+        enhance_info,
+        defect_num_one_image,
+        min_required_num,
     ):
         # 路径预处理
-        if not os.path.exists(os.path.dirname(target_filename)):
-            os.makedirs(os.path.dirname(target_filename))
-        yamlpath = os.path.join(os.path.dirname(self.jcmp_path), "properties.yaml")
+        if not os.path.exists(target_directory):
+            os.makedirs(target_directory)
 
-        # 解析YAML，准备必须的数据
-        with open(yamlpath) as f:
-            data = yaml.load(f, Loader=yaml.FullLoader)
-        periodic_x = data["periodicInfo"][0]
-        periodic_y = data["periodicInfo"][1]
-        source_density = data["sourceDensity"]
-        nodefect_phi0_0 = data["nodefect"]["phi0-0"]
-        nodefect_phi0_90 = data["nodefect"]["phi0-90"]
+        # 准备必须的数据
+        periodic_x = periodic_info[0]
+        periodic_y = periodic_info[1]
 
-        # 获取模板图像
-        if phi0 == 90:
-            template_path = nodefect_phi0_90
-        else:
-            template_path = nodefect_phi0_0
-        template_image = cv2.imread(template_path, cv2.IMREAD_GRAYSCALE)
-        # origin_image_size = template_image.shape
+        # 创建定长数组,存储一个缺陷是否已被生成的状态
+        defect_num = len(list_of_datas)
+        defect_count = [0] * defect_num
 
-        # 确定缺陷类别
-        defect_class = 2
-        if "instruction" in target_filename:
-            defect_class = 0
-        elif "particle" in target_filename:
-            defect_class = 1
-
-        # 提取周期性缺陷图像
-        ## 先确定total_result的形状
-        temp_result = self.resultbag.get_result(self.keys[0])
-        field = (
-            (
-                temp_result[num_of_result]["field"][0].conj()
-                * temp_result[num_of_result]["field"][0]
-            )
-            .sum(axis=2)
-            .real
+        # 获得在缩放之前的仿真图像的尺寸
+        temp_shape = target_shape * target_density / source_density
+        template_reformed = cv2.copyMakeBorder(
+            template_image[0 : 2 * periodic_info[0], 0 : 2 * periodic_info[1]],
+            0,
+            temp_shape[0] - template_image.shape[0],
+            0,
+            temp_shape[1] - template_image.shape[1],
+            cv2.BORDER_WRAP,
         )
-        total_results = np.zeros(field.shape)
-        logger.debug(f"total_result shape defined as {total_results.shape}")
 
-        ## 开始逐个提取结果
-        for key in self.keys:
-            result = self.resultbag.get_result(key)
-            field = (
-                (
-                    result[num_of_result]["field"][0].conj()
-                    * result[num_of_result]["field"][0]
+        image_tag = 0
+        while (0 not in defect_count) and (image_tag < min_required_num):
+            current_image = template_reformed.copy()
+            image_tag += 1
+            picked_lists = []
+            defect_text_list = []
+            for i in range(defect_num_one_image):
+                picked_tag = random.randint(0, defect_num - 1)
+                defect_count[picked_tag] += 1
+                picked_datas = list_of_datas[picked_tag]
+
+                while True:
+                    # 在允许的范围内进行随机移动,表示在第几行第几列
+                    rand_defectpos = [
+                        random.randint(0, int(temp_shape[1]) / periodic_y),
+                        random.randint(0, int(temp_shape[0]) / periodic_x),
+                    ]
+                    if len(picked_lists) == 0:
+                        break
+                    for pos in picked_lists:
+                        if (pos[0] - rand_defectpos[0]) ** 2 + (
+                            pos[1] - rand_defectpos[1]
+                        ) ** 2 < 9:
+                            continue
+                    break
+
+                picked_lists.append(rand_defectpos)
+                current_image[
+                    picked_datas[3][1]
+                    + periodic_y * rand_defectpos[0] : picked_datas[3][1]
+                    + periodic_y * rand_defectpos[0]
+                    + picked_datas[3][3],
+                    picked_datas[3][0]
+                    + periodic_x * rand_defectpos[1] : picked_datas[3][0]
+                    + periodic_y * rand_defectpos[0]
+                    + picked_datas[3][2],
+                ] = picked_datas[0][0 : picked_datas[3][3], 0 : picked_datas[3][2]]
+
+                xpos = (picked_datas[3][0] + picked_datas[3][2] / 2) / temp_shape[1]
+                ypos = (picked_datas[3][1] + picked_datas[3][3] / 2) / temp_shape[0]
+                width = picked_datas[3][2] / temp_shape[1]
+                height = picked_datas[3][3] / temp_shape[0]
+
+                defect_text_list.append(
+                    f"{picked_datas[2]} {xpos} {ypos} {width} {height}\n"
                 )
-                .sum(axis=2)
-                .real
+            label_name = os.path.join(target_directory, f"-{image_tag}.txt")
+            file_name = os.path.join(target_directory, f"-{image_tag}.jpg")
+
+            # 图像处理开始------------------------
+
+            # 缩放
+            scale_factor = source_density * 1.0 / target_density
+            output_image = cv2.resize(
+                current_image,
+                None,
+                fx=scale_factor,
+                fy=scale_factor,
+                interpolation=cv2.INTER_LINEAR,
             )
-            if is_light_intense:
-                field = np.power(field, 2)
-            total_results += field
-            if is_symmetry and not (
-                key["thetaphi"][0] == 0 and key["thetaphi"][1] == 0
-            ):
-                field = np.rot90(field, 2)
-                total_results += field
-                logger.debug("key was rotated for symmetry")
+            # 接下来向图像中添加噪声
+            if enhance_info.has_key("noise_level"):
+                noise_level = enhance_info["noise_level"]
+                # 高斯噪声参数
+                mean = 0
+                # 根据峰值信噪比计算高斯噪声的标准差
+                sigma = np.sqrt(255**2 / (10 ** (noise_level / 10)))
+                image_shape = (output_image.shape[0], output_image.shape[1])
+                gauss = np.random.normal(mean, sigma, image_shape)
+                output_image = np.clip(output_image + gauss, 0, 255)
 
-        # 合并最终结果
-        vmaxa = np.max(total_results) if vmax is None else vmax
-        afield = (total_results / vmaxa) * 235
-        afield = np.rot90(afield)
-
-        (output_image, (xpos, ypos, width, height)) = self.__process_image(
-            afield, template_image, signal_level
-        )
-
-        lower_border = (
-            0.6
-            * max(periodic_x, periodic_y)
-            / source_density
-            / max(output_image.shape[0], output_image.shape[1])
-        )
-        lower_warn = (
-            1.0
-            * max(periodic_x, periodic_y)
-            / source_density
-            / max(output_image.shape[0], output_image.shape[1])
-        )
-        upper_warn = (
-            2.0
-            * max(periodic_x, periodic_y)
-            / source_density
-            / max(output_image.shape[0], output_image.shape[1])
-        )
-        upper_border = (
-            2.4
-            * max(periodic_x, periodic_y)
-            / source_density
-            / max(output_image.shape[0], output_image.shape[1])
-        )
-        # 大致检测结果正确性
-        if width <= lower_border or height <= lower_border:
-            logger.error(
-                f"false mixed image detected,key-{self.origin_key} was detected too small width or height. the width is {width},height is {height},which is smaller than ({lower_border},{lower_border}) , try a smaller signal_level"
-            )
-            raise Exception("error detected , please read log")
-        if width <= lower_warn or height <= lower_warn:
-            logger.warning(
-                f"key-{self.origin_key} mixed image smaller than ({lower_warn},{lower_warn}) maybe a little bit strage , please check"
-            )
-        if width >= upper_warn or height >= upper_warn:
-            logger.warning(
-                f"key-{self.origin_key} mixed image lagger than ({upper_warn},{upper_warn}) maybe a little bit strage , please check"
-            )
-        if width >= upper_border or height >= upper_border:
-            logger.error(
-                f"false mixed image detected,key-{self.origin_key} was detected too big width or height. the width is {width},height is {height},which is larger than ({upper_border},{upper_border}), try a larger signal_level"
-            )
-            raise Exception("error detected , please read log")
-
-        # #####
-        # 重要
-        # ! 在此行开始，进行数据增广处理
-        # ! 增广方式为：
-        # ! 微位移方式出图
-        # ! 旋转出图
-        # ! 添加噪声
-        ###########
-
-        stored_images = [output_image]
-        stored_positions = [(xpos, ypos, width, height)]
-        # 1.微位移
-        if is_micro_translate:
-            image_size = output_image.shape
-            temp_img = []
-            move_length = np.linspace(
-                0, target_density / source_density, 3, endpoint=False
-            )
-            for i in range(len(move_length)):
-                for j in range(len(move_length)):
-                    M = np.array([[1, 0, i], [0, 1, j]], dtype=np.float32)
-                    temp_img.append(cv2.warpAffine(output_image, M, output_image.shape))
-
-            clip_length = np.uint32(np.ceil(target_density / source_density))
-            for i in range(len(temp_img)):
-                temp_img[i] = temp_img[i][
-                    clip_length : image_size[0] - clip_length,
-                    clip_length : image_size[1] - clip_length,
-                ]
-
-            stored_images = temp_img
-            temp_pos = []
-            for i in range(len(temp_img)):
-                temp_pos.append((xpos, ypos, width, height))
-            stored_positions = temp_pos
-
-        # 旋转
-        if is_rotate:
-            backup_positions = (
-                (xpos, ypos, width, height),
-                (1 - ypos, xpos, height, width),
-                (1 - xpos, 1 - ypos, width, height),
-                (ypos, 1 - xpos, height, width),
-            )
-            temp_pos = []
-            temp_img = []
-            for i, img in enumerate(stored_images):
-                temp_img.append(img)
-                temp_img.append(cv2.rotate(img, cv2.ROTATE_90_CLOCKWISE))
-                temp_img.append(cv2.rotate(img, cv2.ROTATE_180))
-                temp_img.append(cv2.rotate(img, cv2.ROTATE_90_COUNTERCLOCKWISE))
-                temp_pos.append(backup_positions[0])
-                temp_pos.append(backup_positions[1])
-                temp_pos.append(backup_positions[2])
-                temp_pos.append(backup_positions[3])
-            stored_images = temp_img
-            stored_positions = temp_pos
-
-        # 缩放
-        scale_factor = source_density * 1.0 / target_density
-        temp_img = []
-        for img in stored_images:
-            temp_img.append(
-                cv2.resize(
-                    img,
-                    None,
-                    fx=scale_factor,
-                    fy=scale_factor,
-                    interpolation=cv2.INTER_LINEAR,
-                )
-            )
-        stored_images = temp_img
-
-        # 接下来向图像中添加噪声
-        if is_noise:
-            temp_img = []
-            temp_pos = []
-            # 高斯噪声参数
-            mean = 0
-            # 根据峰值信噪比计算高斯噪声的标准差
-            sigma = np.sqrt(255**2 / (10 ** (noise_level / 10)))
-            image_shape = (stored_images[0].shape[0], stored_images[0].shape[1])
-            for i, img in enumerate(stored_images):
-                for j in range(2):
-                    gauss = np.random.normal(mean, sigma, image_shape)
-                    temp_img.append(np.clip(img + gauss, 0, 255))
-                    temp_pos.append(stored_positions[i])
-            stored_images = temp_img
-            stored_positions = temp_pos
-
-        # # 保存
-
-        for i, img in enumerate(stored_images):
-            if random.random() < throw_rate:
-                continue
-            label_name = target_filename + f"-{i}.txt"
-            file_name = target_filename + f"-{i}.jpg"
+            # 图像处理结束--------------------------
 
             with open(label_name, "w") as f:
-                f.write(
-                    f"{defect_class} {stored_positions[i][0]} {stored_positions[i][1]} {stored_positions[i][2]} {stored_positions[i][3]}"
-                )
-            cv2.imwrite(file_name, img)
+                for text in defect_text_list:
+                    f.write(text)
+            cv2.imwrite(file_name, output_image)
+            logger.info(f"target image {image_tag} saved completed!")
 
-        # 绘图
-        logger.debug(f"printing max value of results:{np.max(total_results)}")
-        logger.info("all target image saved completed!")
+        # stored_images = [output_image]
+        # stored_positions = [(xpos, ypos, width, height)]
+        # # 1.微位移
+        # if is_micro_translate:
+        #     image_size = output_image.shape
+        #     temp_img = []
+        #     move_length = np.linspace(
+        #         0, target_density / source_density, 3, endpoint=False
+        #     )
+        #     for i in range(len(move_length)):
+        #         for j in range(len(move_length)):
+        #             M = np.array([[1, 0, i], [0, 1, j]], dtype=np.float32)
+        #             temp_img.append(cv2.warpAffine(output_image, M, output_image.shape))
+
+        #     clip_length = np.uint32(np.ceil(target_density / source_density))
+        #     for i in range(len(temp_img)):
+        #         temp_img[i] = temp_img[i][
+        #             clip_length : image_size[0] - clip_length,
+        #             clip_length : image_size[1] - clip_length,
+        #         ]
+
+        #     stored_images = temp_img
+        #     temp_pos = []
+        #     for i in range(len(temp_img)):
+        #         temp_pos.append((xpos, ypos, width, height))
+        #     stored_positions = temp_pos
 
     def __process_image(
-        self, defect_img, template_img, signal_level, smooth_length=15, extend_length=7
+        self,
+        defect_img,
+        template_img,
+        signal_level,
+        periodic_info,
+        defect_class,
+        smooth_length=5,
+        extend_length=3,
     ):
         diff_img = defect_img.astype(np.float32) - template_img.astype(np.float32)
         image_shape = template_img.shape
@@ -303,40 +213,35 @@ class datagen:
         gradX = cv2.Sobel(diff_img, ddepth=cv2.CV_32F, dx=1, dy=0, ksize=-1)
         gradY = cv2.Sobel(diff_img, ddepth=cv2.CV_32F, dx=0, dy=1, ksize=-1)
 
-        # subtract the y-gradient from the x-gradient
-        gradient = cv2.subtract(gradX, gradY)
+        gradient = cv2.addWeighted(gradX, 0.5, gradY, 0.5, 0)
         gradient = cv2.convertScaleAbs(gradient)
         defect_lowborder = np.max(gradient) * signal_level
         # blurred = cv2.blur(gradient, (5, 5),borderType=cv2.BORDER_REFLECT)
         (_, thresh) = cv2.threshold(gradient, defect_lowborder, 255, cv2.THRESH_BINARY)
 
-        kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (3, 3))
+        kernel1 = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (3, 3))
+        kernel2 = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (7, 7))
         thresh = cv2.morphologyEx(
             thresh,
-            cv2.MORPH_CLOSE,
-            kernel,
+            cv2.MORPH_OPEN,
+            kernel1,
             iterations=2,
             borderType=cv2.BORDER_ISOLATED,
         )
-        thresh = cv2.erode(thresh, None, iterations=1)
-        thresh = cv2.dilate(thresh, None, iterations=2)
-
-        kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (7, 7))
-        closed = cv2.morphologyEx(
+        thresh = cv2.dilate(thresh, kernel1, iterations=2)
+        thresh = cv2.morphologyEx(
             thresh,
             cv2.MORPH_CLOSE,
-            kernel,
-            iterations=3,
+            kernel2,
+            iterations=2,
             borderType=cv2.BORDER_ISOLATED,
         )
-        closed = cv2.erode(closed, None, iterations=4)
-        closed = cv2.dilate(closed, None, iterations=6)
+        thresh = cv2.dilate(thresh, kernel1, iterations=2)
 
         # 找距离图像中心点最近的一个封闭区域
         (cnts, _) = cv2.findContours(
-            closed.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE
+            thresh.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE
         )
-        # c = sorted(cnts, key=cv2.contourArea, reverse=True)[0]
         min_dist = -1
         c = cnts[0]
         for conners in cnts:
@@ -362,6 +267,10 @@ class datagen:
 
         # compute the rotated bounding box of the largest contour
         x, y, w, h = cv2.boundingRect(c)
+        if w < 20 or w > 50:
+            raise Exception(f"缺陷提取出现错误，当前宽度为{w}")
+        if h < 20 or w > 70:
+            raise Exception(f"缺陷提取出现错误，当前高度为{h}")
 
         # 延伸扩展边界，避免强截断
         x -= extend_length
@@ -381,8 +290,8 @@ class datagen:
             (x - smooth_length, y + h + smooth_length),
         ]
 
-        output_img = template_img
-        output_img[y : y + h, x : x + w] = defect_img[y : y + h, x : x + w]
+        process_img = template_img
+        process_img[y : y + h, x : x + w] = defect_img[y : y + h, x : x + w]
 
         diff_img = diff_img
         x_lower_border = max(0, x - smooth_length)
@@ -419,13 +328,27 @@ class datagen:
                     min_distance = min(distances)
                     min_distance2 = min(distances2)
                     # output_img[j,i] = 255
-                    output_img[j, i] += (
+                    process_img[j, i] += (
                         diff_img[j, i]
                         * (min_distance2)
                         / (min_distance + min_distance2)
                     )
-        xpos = (x + w / 2) / image_shape[1]
-        ypos = (y + h / 2) / image_shape[0]
-        width = w / image_shape[1]
-        height = h / image_shape[0]
-        return (output_img, (xpos, ypos, width, height))
+        output_img = process_img[
+            y_lower_border:y_upper_border, x_lower_border, x_upper_border
+        ]
+        # xpos = (x + w / 2) / image_shape[1]
+        # ypos = (y + h / 2) / image_shape[0]
+        # width = w / image_shape[1]
+        # height = h / image_shape[0]
+
+        return (
+            output_img,
+            periodic_info,
+            defect_class,
+            (
+                x_lower_border,
+                y_lower_border,
+                x_upper_border - x_lower_border,
+                y_upper_border - y_lower_border,
+            ),
+        )
