@@ -83,11 +83,11 @@ class datagen:
         temp_shape[0] = int(target_shape[0] * target_density / source_density)
         temp_shape[1] = int(target_shape[1] * target_density / source_density)
         template_reformed = cv2.copyMakeBorder(
-            template_image[0 : 2 * periodic_info[0], 0 : 2 * periodic_info[1]],
+            template_image[0 : 2 * periodic_info[1], 0 : 2 * periodic_info[0]],
             0,
-            temp_shape[0] - 2 * periodic_info[0] ,
+            temp_shape[0] - 2 * periodic_info[1] ,
             0,
-            temp_shape[1] - 2 * periodic_info[1],
+            temp_shape[1] - 2 * periodic_info[0],
             cv2.BORDER_WRAP,
         )
 
