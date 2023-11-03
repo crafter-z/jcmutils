@@ -129,9 +129,6 @@ class datagen:
                 picked_lists.append(rand_defectpos)
                 base_y =picked_datas[3][1] + periodic_y * rand_defectpos[1]
                 base_x =picked_datas[3][0] + periodic_x * rand_defectpos[0]
-                print([base_y,base_x])
-                print(picked_datas)
-                # kakkk =current_image[base_y:base_y + picked_datas[3][3],base_x:base_x + picked_datas[3][2]]  
                 current_image[base_y:base_y + picked_datas[3][3],base_x:base_x + picked_datas[3][2]] = picked_datas[0][0 : picked_datas[3][3], 0 : picked_datas[3][2]]
 
                 xpos = (base_x + picked_datas[3][2] / 2) / temp_shape[1]
