@@ -90,7 +90,17 @@ class datagen:
             temp_shape[1] - 2 * periodic_info[1],
             cv2.BORDER_WRAP,
         )
-        image_tag = 0
+
+        # 获取文件夹中的最大数值
+        path_list=os.listdir(target_directory)
+        if len(path_list) == 0:
+            image_tag = 0
+        else:
+            path_list.sort(key=lambda x:int(x.split('.')[0])) #对‘.’进行切片，并取列表的第一个值（左边的文件名）转化整数型
+            temp_name,_ = os.path.split(path_list[-1])
+            image_tag = int(temp_name)
+        
+        
         while (0 in defect_count) and (image_tag < min_required_num):
             current_image = template_reformed.copy()
             image_tag += 1
