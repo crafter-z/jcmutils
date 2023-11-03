@@ -101,7 +101,7 @@ class datagen:
             image_tag = int(temp_name)
         
         
-        while (0 in defect_count) and (image_tag < min_required_num):
+        while (0 in defect_count) or (image_tag < min_required_num):
             current_image = template_reformed.copy()
             image_tag += 1
             picked_lists = []
