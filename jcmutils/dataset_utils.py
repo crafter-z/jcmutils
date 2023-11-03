@@ -264,9 +264,9 @@ class datagen:
 
         # compute the rotated bounding box of the largest contour
         x, y, w, h = cv2.boundingRect(c)
-        if w < 0.4*periodic_info[0] or w > 3*periodic_info[0]:
+        if w < 0.2*periodic_info[0] or w > 1.5*periodic_info[0]:
             raise Exception(f"缺陷提取出现错误，当前宽度为{w}")
-        if h < 0.4*periodic_info[1] or w > 3*periodic_info[1]:
+        if h < 0.2*periodic_info[1] or w > 1.5*periodic_info[1]:
             raise Exception(f"缺陷提取出现错误，当前高度为{h}")
 
         # 延伸扩展边界，避免强截断
