@@ -97,7 +97,7 @@ class datagen:
             image_tag = 0
         else:
             path_list.sort(key=lambda x:int(x.split('.')[0])) #对‘.’进行切片，并取列表的第一个值（左边的文件名）转化整数型
-            temp_name,_ = os.path.split(path_list[-1])
+            temp_name,_ = os.path.splitext(path_list[-1])
             image_tag = int(temp_name)
         
         
@@ -134,8 +134,8 @@ class datagen:
                 # kakkk =current_image[base_y:base_y + picked_datas[3][3],base_x:base_x + picked_datas[3][2]]  
                 current_image[base_y:base_y + picked_datas[3][3],base_x:base_x + picked_datas[3][2]] = picked_datas[0][0 : picked_datas[3][3], 0 : picked_datas[3][2]]
 
-                xpos = (picked_datas[3][0] + picked_datas[3][2] / 2) / temp_shape[1]
-                ypos = (picked_datas[3][1] + picked_datas[3][3] / 2) / temp_shape[0]
+                xpos = (base_x + picked_datas[3][2] / 2) / temp_shape[1]
+                ypos = (base_y + picked_datas[3][3] / 2) / temp_shape[0]
                 width = picked_datas[3][2] / temp_shape[1]
                 height = picked_datas[3][3] / temp_shape[0]
 
