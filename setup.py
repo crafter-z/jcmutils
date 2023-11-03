@@ -1,6 +1,6 @@
 from setuptools import setup,find_packages
 
-VERSION = '1.7.0.1'
+VERSION = '1.7.1'
 DESCRIPTION = "A general utils for jcmsuite"
 
 setup(

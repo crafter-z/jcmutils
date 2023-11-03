@@ -34,8 +34,8 @@ class datagen:
             signal_level,
             periodic_info,
             defect_class,
-            15,
-            7,
+            5,
+            3,
         )
         return datas
 
@@ -79,18 +79,19 @@ class datagen:
         defect_count = [0] * defect_num
 
         # 获得在缩放之前的仿真图像的尺寸
-        temp_shape = target_shape * target_density / source_density
+        temp_shape = target_shape
+        temp_shape[0] = int(target_shape[0] * target_density / source_density)
+        temp_shape[1] = int(target_shape[1] * target_density / source_density)
         template_reformed = cv2.copyMakeBorder(
-            template_image[0 : 2 * periodic_info[0], 0 : 2 * periodic_info[1]],
+            template_image[0 : 2 * periodic_info[1], 0 : 2 * periodic_info[0]],
             0,
-            temp_shape[0] - template_image.shape[0],
+            temp_shape[0] - 2 * periodic_info[0] ,
             0,
-            temp_shape[1] - template_image.shape[1],
+            temp_shape[1] - 2 * periodic_info[1],
             cv2.BORDER_WRAP,
         )
-
         image_tag = 0
-        while (0 not in defect_count) and (image_tag < min_required_num):
+        while (0 in defect_count) and (image_tag < min_required_num):
             current_image = template_reformed.copy()
             image_tag += 1
             picked_lists = []
@@ -103,8 +104,8 @@ class datagen:
                 while True:
                     # 在允许的范围内进行随机移动,表示在第几行第几列
                     rand_defectpos = [
-                        random.randint(0, int(temp_shape[1]) / periodic_y),
-                        random.randint(0, int(temp_shape[0]) / periodic_x),
+                        random.randint(0, int((temp_shape[1] - picked_datas[3][1] )/ periodic_y) - 2),
+                        random.randint(0, int((temp_shape[0] - picked_datas[3][1]  )/ periodic_x) - 2),
                     ]
                     if len(picked_lists) == 0:
                         break
@@ -116,16 +117,12 @@ class datagen:
                     break
 
                 picked_lists.append(rand_defectpos)
-                current_image[
-                    picked_datas[3][1]
-                    + periodic_y * rand_defectpos[0] : picked_datas[3][1]
-                    + periodic_y * rand_defectpos[0]
-                    + picked_datas[3][3],
-                    picked_datas[3][0]
-                    + periodic_x * rand_defectpos[1] : picked_datas[3][0]
-                    + periodic_y * rand_defectpos[0]
-                    + picked_datas[3][2],
-                ] = picked_datas[0][0 : picked_datas[3][3], 0 : picked_datas[3][2]]
+                base_y =picked_datas[3][1] + periodic_y * rand_defectpos[1]
+                base_x =picked_datas[3][0] + periodic_x * rand_defectpos[0]
+                print([base_y,base_x])
+                print(picked_datas)
+                # kakkk =current_image[base_y:base_y + picked_datas[3][3],base_x:base_x + picked_datas[3][2]]  
+                current_image[base_y:base_y + picked_datas[3][3],base_x:base_x + picked_datas[3][2]] = picked_datas[0][0 : picked_datas[3][3], 0 : picked_datas[3][2]]
 
                 xpos = (picked_datas[3][0] + picked_datas[3][2] / 2) / temp_shape[1]
                 ypos = (picked_datas[3][1] + picked_datas[3][3] / 2) / temp_shape[0]
@@ -135,8 +132,8 @@ class datagen:
                 defect_text_list.append(
                     f"{picked_datas[2]} {xpos} {ypos} {width} {height}\n"
                 )
-            label_name = os.path.join(target_directory, f"-{image_tag}.txt")
-            file_name = os.path.join(target_directory, f"-{image_tag}.jpg")
+            label_name = os.path.join(target_directory, f"{image_tag}.txt")
+            file_name = os.path.join(target_directory, f"{image_tag}.jpg")
 
             # 图像处理开始------------------------
 
@@ -150,7 +147,7 @@ class datagen:
                 interpolation=cv2.INTER_LINEAR,
             )
             # 接下来向图像中添加噪声
-            if enhance_info.has_key("noise_level"):
+            if "noise_level" in enhance_info:
                 noise_level = enhance_info["noise_level"]
                 # 高斯噪声参数
                 mean = 0
@@ -267,9 +264,9 @@ class datagen:
 
         # compute the rotated bounding box of the largest contour
         x, y, w, h = cv2.boundingRect(c)
-        if w < 20 or w > 50:
+        if w < 0.4*periodic_info[0] or w > 3*periodic_info[0]:
             raise Exception(f"缺陷提取出现错误，当前宽度为{w}")
-        if h < 20 or w > 70:
+        if h < 0.4*periodic_info[1] or w > 3*periodic_info[1]:
             raise Exception(f"缺陷提取出现错误，当前高度为{h}")
 
         # 延伸扩展边界，避免强截断
@@ -290,7 +287,7 @@ class datagen:
             (x - smooth_length, y + h + smooth_length),
         ]
 
-        process_img = template_img
+        process_img = template_img.copy()
         process_img[y : y + h, x : x + w] = defect_img[y : y + h, x : x + w]
 
         diff_img = diff_img
@@ -334,7 +331,7 @@ class datagen:
                         / (min_distance + min_distance2)
                     )
         output_img = process_img[
-            y_lower_border:y_upper_border, x_lower_border, x_upper_border
+            y_lower_border:y_upper_border, x_lower_border: x_upper_border
         ]
         # xpos = (x + w / 2) / image_shape[1]
         # ypos = (y + h / 2) / image_shape[0]
