@@ -114,8 +114,8 @@ class datagen:
                 while True:
                     # 在允许的范围内进行随机移动,表示在第几行第几列
                     rand_defectpos = [
-                        random.randint(0, int((temp_shape[1] - picked_datas[3][1] )/ periodic_y) - 2),
-                        random.randint(0, int((temp_shape[0] - picked_datas[3][1] )/ periodic_x) - 2),
+                        random.randint(0, int((temp_shape[1] - picked_datas[3][1] )/ periodic_y) - 3),
+                        random.randint(0, int((temp_shape[0] - picked_datas[3][1] )/ periodic_x) - 3),
                     ]
                     if len(picked_lists) == 0:
                         break
