@@ -115,7 +115,7 @@ class datagen:
                     # 在允许的范围内进行随机移动,表示在第几行第几列
                     rand_defectpos = [
                         random.randint(0, int((temp_shape[1] - picked_datas[3][1] )/ periodic_y) - 2),
-                        random.randint(0, int((temp_shape[0] - picked_datas[3][1]  )/ periodic_x) - 2),
+                        random.randint(0, int((temp_shape[0] - picked_datas[3][1] )/ periodic_x) - 2),
                     ]
                     if len(picked_lists) == 0:
                         break
@@ -127,8 +127,8 @@ class datagen:
                     break
 
                 picked_lists.append(rand_defectpos)
-                base_y =picked_datas[3][1] + periodic_y * rand_defectpos[1]
-                base_x =picked_datas[3][0] + periodic_x * rand_defectpos[0]
+                base_y =picked_datas[3][1] + periodic_y * rand_defectpos[0]
+                base_x =picked_datas[3][0] + periodic_x * rand_defectpos[1]
                 current_image[base_y:base_y + picked_datas[3][3],base_x:base_x + picked_datas[3][2]] = picked_datas[0][0 : picked_datas[3][3], 0 : picked_datas[3][2]]
 
                 xpos = (base_x + picked_datas[3][2] / 2) / temp_shape[1]
