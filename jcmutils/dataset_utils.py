@@ -83,7 +83,7 @@ class datagen:
         temp_shape[0] = int(target_shape[0] * target_density / source_density)
         temp_shape[1] = int(target_shape[1] * target_density / source_density)
         template_reformed = cv2.copyMakeBorder(
-            template_image[0 : 2 * periodic_info[1], 0 : 2 * periodic_info[0]],
+            template_image[0 : 2 * periodic_info[0], 0 : 2 * periodic_info[1]],
             0,
             temp_shape[0] - 2 * periodic_info[0] ,
             0,
@@ -131,8 +131,8 @@ class datagen:
                 base_x =picked_datas[3][0] + periodic_x * rand_defectpos[1]
                 current_image[base_y:base_y + picked_datas[3][3],base_x:base_x + picked_datas[3][2]] = picked_datas[0][0 : picked_datas[3][3], 0 : picked_datas[3][2]]
 
-                xpos = (base_x + picked_datas[3][0] / 2) / temp_shape[1]
-                ypos = (base_y + picked_datas[3][1] / 2) / temp_shape[0]
+                xpos = (base_x + picked_datas[3][2] / 2) / temp_shape[1]
+                ypos = (base_y + picked_datas[3][3] / 2) / temp_shape[0]
                 width = picked_datas[3][2] / temp_shape[1]
                 height = picked_datas[3][3] / temp_shape[0]
 
