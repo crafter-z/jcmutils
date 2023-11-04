@@ -345,6 +345,7 @@ class datagen:
         # width = w / image_shape[1]
         # height = h / image_shape[0]
 
+        p = random.random()
         return (
             output_img,
             periodic_info,
@@ -355,4 +356,5 @@ class datagen:
                 x_upper_border - x_lower_border,
                 y_upper_border - y_lower_border,
             ),
+            True if p < 0.9 else False
         )
