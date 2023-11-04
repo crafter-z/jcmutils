@@ -79,7 +79,7 @@ class datagen:
         defect_count = [0] * defect_num
 
         # 获得在缩放之前的仿真图像的尺寸
-        temp_shape = target_shape
+        temp_shape = target_shape.copy()
         temp_shape[0] = int(target_shape[0] * target_density / source_density)
         temp_shape[1] = int(target_shape[1] * target_density / source_density)
         template_reformed = cv2.copyMakeBorder(
