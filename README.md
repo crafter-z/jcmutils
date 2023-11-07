@@ -69,3 +69,29 @@ solver.save_all_image(target_directory,num_of_results,is_light_intense=False)
 - num_of_results: 想要查看或保存的图像在工程中的序号
 - target_directory: 想要保存的图像的父目录
 - is_light_intense: 当其为True时，保存光强而非电场强度
+
+# 生成数据集
+包内的函数可以生成对应的数据集，使用方法如下：
+按照`dataset_utils.export_defect_datas()`函数的要求，提供对应的参数。随后，将每个缺陷图像所对应的参数返回的数据组成一个List，并提供给`dataset_utils.export_dataset()`函数。
+
+示例：
+```python
+generator = jcmutils.datagen()
+template_image = cv2.imread(template_image_path,cv2.IMREAD_GRAYSCALE)
+list_datas = []
+list_test_datas = []
+for dir in list_defect_directory:
+    list_imgs = os.listdir(dir)
+    for imgs in list_imgs:
+        image = cv2.imread(os.path.join(dir,imgs),cv2.IMREAD_GRAYSCALE)
+        defect_class = 0 if "instruction" in dir else 1
+        datas = generator.export_defect_datas(template_image,image,periodic_info,signal_level,defect_class)
+        if datas[4]:
+            list_datas.append(datas)
+        else:
+            list_test_datas.append(datas)
+
+generator.export_dataset(list_datas,template_image,target_shape,source_density,target_density,os.path.join(dataset_dir,"train"),periodic_info,enhance_info,defect_num_one_image,min_required_num)
+
+generator.export_dataset(list_test_datas,template_image,target_shape,source_density,target_density,os.path.join(dataset_dir,"test"),periodic_info,enhance_info,defect_num_one_image,min_required_num/10)
+```

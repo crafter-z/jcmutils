@@ -1,9 +1,7 @@
 from .logger import logger
 import numpy as np
 import os
-import jcmwave
 import cv2
-import yaml
 import random
 
 
@@ -14,10 +12,6 @@ import random
 
 class datagen:
     """在使用数据集生成器之前，需要先对其进行初始化
-    :param  jcmp_path: project.jcmp所在的位置
-    :param  database_path: resultbag.db所在的位置
-    :param  keys: 仿真完整科勒照明成像时所需的keys
-    :param  origin_key: log所用，用于标记当前的keys是由什么参数生成出来的
     """
 
     def __init__(self):
@@ -25,6 +19,19 @@ class datagen:
         # 随机初始化
         random.seed()
 
+    '''导出一个有缺陷图像所对应的各种信息
+    :param  template_image: 无缺陷的模板图像，是图像而不是图像的路径
+    :param  target_image: 有缺陷的目标图像
+    :param  periodic_info: 周期性信息，第一位是多少列像素一个周期，第二位是多少行像素一个周期
+    :param  signal_level: 缺陷信号强度，作为论文中的ε来判断阈值
+    :param  defect_class: 该缺陷是哪一类缺陷
+    :returns -> List:返回值是一个列表
+            第一项是抠出来的缺陷所在的矩形区域的图像
+            第二项是periodic_info
+            第三项是缺陷种类
+            第四项是缺陷在原图中的对应(x,y,w,h)，其中x，y是左上角坐标，w,h是宽高
+            第五项是bool类型，代表该图所对应缺陷是否被划入训练或验证集
+    '''
     def export_defect_datas(
         self, template_image, target_image, periodic_info, signal_level, defect_class
     ):
@@ -39,7 +46,7 @@ class datagen:
         )
         return datas
 
-    """主要函数，将每次仿真按数据集的方式进行生成
+    """将一个由export_defect_datas中返回的datas组成的列表处理为数据集并保存
     :param  list_of_datas: 从export_defect_datas函数中生成的datas组成的list
     :param  template_image: 无缺陷的样本图像
     :param  target_shape: 导出目标图像的分辨率，缩放后的
@@ -91,7 +98,7 @@ class datagen:
             cv2.BORDER_WRAP,
         )
 
-        # 获取文件夹中的最大数值
+        # 获取文件夹中文件名的最大数值，保存的每张图像的名字应该按顺序增加
         path_list=os.listdir(target_directory)
         if len(path_list) == 0:
             image_tag = 0
@@ -101,18 +108,23 @@ class datagen:
             image_tag = int(temp_name)
         
         
+        # 开始处理每张图像,迭代终止条件是所有缺陷均被包含且图像数量不小于min_required_num
         while (0 in defect_count) or (image_tag < min_required_num):
+            # 深拷贝图像
             current_image = template_reformed.copy()
             image_tag += 1
-            picked_lists = []
-            defect_text_list = []
+            picked_lists = [] # 存储当前图像中已被添加的缺陷
+            defect_text_list = [] # 存储被保存进数据集标注文件中的信息
+            
+            # 计次循环
             for i in range(defect_num_one_image):
+
                 picked_tag = random.randint(0, defect_num - 1)
                 defect_count[picked_tag] += 1
                 picked_datas = list_of_datas[picked_tag]
 
                 while True:
-                    # 在允许的范围内进行随机移动,表示在第几行第几列
+                    # 在允许的范围内进行随机移动,表示在横向第几个周期，和纵向第几个周期
                     rand_defectpos = [
                         random.randint(0, int((temp_shape[1] - picked_datas[3][1] )/ periodic_y) - 3),
                         random.randint(0, int((temp_shape[0] - picked_datas[3][1] )/ periodic_x) - 3),
@@ -127,10 +139,12 @@ class datagen:
                     break
 
                 picked_lists.append(rand_defectpos)
+                # 将缺陷图像粘贴到无缺陷图像的随机位置
                 base_y =picked_datas[3][1] + periodic_y * rand_defectpos[0]
                 base_x =picked_datas[3][0] + periodic_x * rand_defectpos[1]
                 current_image[base_y:base_y + picked_datas[3][3],base_x:base_x + picked_datas[3][2]] = picked_datas[0][0 : picked_datas[3][3], 0 : picked_datas[3][2]]
 
+                # 计算yolo格式数据集涉及到的信息
                 xpos = (base_x + picked_datas[3][2] / 2) / temp_shape[1]
                 ypos = (base_y + picked_datas[3][3] / 2) / temp_shape[0]
                 width = picked_datas[3][2] / temp_shape[1]
@@ -139,6 +153,7 @@ class datagen:
                 defect_text_list.append(
                     f"{picked_datas[2]} {xpos} {ypos} {width} {height}\n"
                 )
+
             label_name = os.path.join(target_directory, f"{image_tag}.txt")
             file_name = os.path.join(target_directory, f"{image_tag}.jpg")
 
@@ -166,39 +181,18 @@ class datagen:
 
             # 图像处理结束--------------------------
 
+            # 保存图像与数据集文件
             with open(label_name, "w") as f:
                 for text in defect_text_list:
                     f.write(text)
             cv2.imwrite(file_name, output_image)
             logger.info(f"target image {image_tag} saved completed!")
 
-        # stored_images = [output_image]
-        # stored_positions = [(xpos, ypos, width, height)]
-        # # 1.微位移
-        # if is_micro_translate:
-        #     image_size = output_image.shape
-        #     temp_img = []
-        #     move_length = np.linspace(
-        #         0, target_density / source_density, 3, endpoint=False
-        #     )
-        #     for i in range(len(move_length)):
-        #         for j in range(len(move_length)):
-        #             M = np.array([[1, 0, i], [0, 1, j]], dtype=np.float32)
-        #             temp_img.append(cv2.warpAffine(output_image, M, output_image.shape))
-
-        #     clip_length = np.uint32(np.ceil(target_density / source_density))
-        #     for i in range(len(temp_img)):
-        #         temp_img[i] = temp_img[i][
-        #             clip_length : image_size[0] - clip_length,
-        #             clip_length : image_size[1] - clip_length,
-        #         ]
-
-        #     stored_images = temp_img
-        #     temp_pos = []
-        #     for i in range(len(temp_img)):
-        #         temp_pos.append((xpos, ypos, width, height))
-        #     stored_positions = temp_pos
-
+    '''处理图像
+    :param  smooth_length: 获取缺陷区域后，要在缺陷外一段区域进行一下平滑处理
+    :param  extend_length: 返回缺陷区域的时候，在缺陷外部再延伸一点区域返回,避免算法硬截断
+    '''
+    
     def __process_image(
         self,
         defect_img,
@@ -302,6 +296,7 @@ class datagen:
         x_upper_border = min(image_shape[1] - 1, x + w + smooth_length - 1)
         y_lower_border = max(0, y - smooth_length)
         y_upper_border = min(image_shape[0] - 1, y + h + smooth_length - 1)
+
         for i in range(x_lower_border, x_upper_border):
             for j in range(y_lower_border, y_upper_border):
                 if not (
@@ -340,10 +335,6 @@ class datagen:
         output_img = process_img[
             y_lower_border:y_upper_border, x_lower_border: x_upper_border
         ]
-        # xpos = (x + w / 2) / image_shape[1]
-        # ypos = (y + h / 2) / image_shape[0]
-        # width = w / image_shape[1]
-        # height = h / image_shape[0]
 
         p = random.random()
         return (
