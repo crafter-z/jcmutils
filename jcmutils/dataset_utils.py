@@ -1,40 +1,38 @@
-from .logger import logger
-import numpy as np
-import os
-import cv2
-import random
-
-
-"""数据集的生成
+"""此模块负责数据集的生成
 数据会被存放在单独的dataset文件夹里
 """
+import random
+import os
+import numpy as np
+import cv2
+
+from .logger import logger
 
 
 class datagen:
-    """在使用数据集生成器之前，需要先对其进行初始化
-    """
+    """在使用数据集生成器之前，需要先对其进行初始化"""
 
     def __init__(self):
         logger.debug("datagen inited,no error reported")
         # 随机初始化
         random.seed()
 
-    '''导出一个有缺陷图像所对应的各种信息
-    :param  template_image: 无缺陷的模板图像，是图像而不是图像的路径
-    :param  target_image: 有缺陷的目标图像
-    :param  periodic_info: 周期性信息，第一位是多少列像素一个周期，第二位是多少行像素一个周期
-    :param  signal_level: 缺陷信号强度，作为论文中的ε来判断阈值
-    :param  defect_class: 该缺陷是哪一类缺陷
-    :returns -> List:返回值是一个列表
-            第一项是抠出来的缺陷所在的矩形区域的图像
-            第二项是periodic_info
-            第三项是缺陷种类
-            第四项是缺陷在原图中的对应(x,y,w,h)，其中x，y是左上角坐标，w,h是宽高
-            第五项是bool类型，代表该图所对应缺陷是否被划入训练或验证集
-    '''
     def export_defect_datas(
         self, template_image, target_image, periodic_info, signal_level, defect_class
     ):
+        """导出一个有缺陷图像所对应的各种信息
+        :param  template_image: 无缺陷的模板图像，是图像而不是图像的路径
+        :param  target_image: 有缺陷的目标图像
+        :param  periodic_info: 周期性信息，第一位是多少列像素一个周期，第二位是多少行像素一个周期
+        :param  signal_level: 缺陷信号强度，作为论文中的ε来判断阈值
+        :param  defect_class: 该缺陷是哪一类缺陷
+        :returns -> List:返回值是一个列表
+                第一项是抠出来的缺陷所在的矩形区域的图像
+                第二项是periodic_info
+                第三项是缺陷种类
+                第四项是缺陷在原图中的对应(x,y,w,h)，其中x，y是左上角坐标，w,h是宽高
+                第五项是bool类型，代表该图所对应缺陷是否被划入训练或验证集
+        """
         datas = self.__process_image(
             target_image,
             template_image,
@@ -45,20 +43,6 @@ class datagen:
             3,
         )
         return datas
-
-    """将一个由export_defect_datas中返回的datas组成的列表处理为数据集并保存
-    :param  list_of_datas: 从export_defect_datas函数中生成的datas组成的list
-    :param  template_image: 无缺陷的样本图像
-    :param  target_shape: 导出目标图像的分辨率，缩放后的
-    :param  source_density: 原图像一个像素代表多少个纳米
-    :param  target_density: 导出目标的一个像素代表target_density*target_density纳米
-    :param  target_directory: 输出数据的目标文件夹名
-    :param  periodic_info: 周期性信息，第一位是多少列像素一个周期，第二位是多少行像素一个周期
-    :param  enhance_info: 包含可用数据增强（含噪声信息）的字典
-    :param  defect_num_one_image: 生成的每张图像中要包含多少个缺陷
-    :param  min_required_num: 至少需要生成多少张图像
-    
-    """
 
     def export_dataset(
         self,
@@ -73,6 +57,19 @@ class datagen:
         defect_num_one_image,
         min_required_num,
     ):
+        """将一个由export_defect_datas中返回的datas组成的列表处理为数据集并保存
+        :param  list_of_datas: 从export_defect_datas函数中生成的datas组成的list
+        :param  template_image: 无缺陷的样本图像
+        :param  target_shape: 导出目标图像的分辨率，缩放后的
+        :param  source_density: 原图像一个像素代表多少个纳米
+        :param  target_density: 导出目标的一个像素代表target_density*target_density纳米
+        :param  target_directory: 输出数据的目标文件夹名
+        :param  periodic_info: 周期性信息，第一位是多少列像素一个周期，第二位是多少行像素一个周期
+        :param  enhance_info: 包含可用数据增强（含噪声信息）的字典
+        :param  defect_num_one_image: 生成的每张图像中要包含多少个缺陷
+        :param  min_required_num: 至少需要生成多少张图像
+
+        """
         # 路径预处理
         if not os.path.exists(target_directory):
             os.makedirs(target_directory)
@@ -92,33 +89,33 @@ class datagen:
         template_reformed = cv2.copyMakeBorder(
             template_image[0 : 2 * periodic_info[1], 0 : 2 * periodic_info[0]],
             0,
-            temp_shape[0] - 2 * periodic_info[1] ,
+            temp_shape[0] - 2 * periodic_info[1],
             0,
             temp_shape[1] - 2 * periodic_info[0],
             cv2.BORDER_WRAP,
         )
 
         # 获取文件夹中文件名的最大数值，保存的每张图像的名字应该按顺序增加
-        path_list=os.listdir(target_directory)
+        path_list = os.listdir(target_directory)
         if len(path_list) == 0:
             image_tag = 0
         else:
-            path_list.sort(key=lambda x:int(x.split('.')[0])) #对‘.’进行切片，并取列表的第一个值（左边的文件名）转化整数型
-            temp_name,_ = os.path.splitext(path_list[-1])
+            path_list.sort(
+                key=lambda x: int(x.split(".")[0])
+            )  # 对‘.’进行切片，并取列表的第一个值（左边的文件名）转化整数型
+            temp_name, _ = os.path.splitext(path_list[-1])
             image_tag = int(temp_name)
-        
-        
+
         # 开始处理每张图像,迭代终止条件是所有缺陷均被包含且图像数量不小于min_required_num
         while (0 in defect_count) or (image_tag < min_required_num):
             # 深拷贝图像
             current_image = template_reformed.copy()
             image_tag += 1
-            picked_lists = [] # 存储当前图像中已被添加的缺陷
-            defect_text_list = [] # 存储被保存进数据集标注文件中的信息
-            
-            # 计次循环
-            for i in range(defect_num_one_image):
+            picked_lists = []  # 存储当前图像中已被添加的缺陷
+            defect_text_list = []  # 存储被保存进数据集标注文件中的信息
 
+            # 计次循环
+            for _ in range(defect_num_one_image):
                 picked_tag = random.randint(0, defect_num - 1)
                 defect_count[picked_tag] += 1
                 picked_datas = list_of_datas[picked_tag]
@@ -126,8 +123,14 @@ class datagen:
                 while True:
                     # 在允许的范围内进行随机移动,表示在横向第几个周期，和纵向第几个周期
                     rand_defectpos = [
-                        random.randint(0, int((temp_shape[1] - picked_datas[3][1] )/ periodic_y) - 3),
-                        random.randint(0, int((temp_shape[0] - picked_datas[3][1] )/ periodic_x) - 3),
+                        random.randint(
+                            0,
+                            int((temp_shape[1] - picked_datas[3][1]) / periodic_y) - 3,
+                        ),
+                        random.randint(
+                            0,
+                            int((temp_shape[0] - picked_datas[3][1]) / periodic_x) - 3,
+                        ),
                     ]
                     if len(picked_lists) == 0:
                         break
@@ -140,9 +143,12 @@ class datagen:
 
                 picked_lists.append(rand_defectpos)
                 # 将缺陷图像粘贴到无缺陷图像的随机位置
-                base_y =picked_datas[3][1] + periodic_y * rand_defectpos[0]
-                base_x =picked_datas[3][0] + periodic_x * rand_defectpos[1]
-                current_image[base_y:base_y + picked_datas[3][3],base_x:base_x + picked_datas[3][2]] = picked_datas[0][0 : picked_datas[3][3], 0 : picked_datas[3][2]]
+                base_y = picked_datas[3][1] + periodic_y * rand_defectpos[0]
+                base_x = picked_datas[3][0] + periodic_x * rand_defectpos[1]
+                current_image[
+                    base_y : base_y + picked_datas[3][3],
+                    base_x : base_x + picked_datas[3][2],
+                ] = picked_datas[0][0 : picked_datas[3][3], 0 : picked_datas[3][2]]
 
                 # 计算yolo格式数据集涉及到的信息
                 xpos = (base_x + picked_datas[3][2] / 2) / temp_shape[1]
@@ -182,17 +188,12 @@ class datagen:
             # 图像处理结束--------------------------
 
             # 保存图像与数据集文件
-            with open(label_name, "w") as f:
+            with open(label_name, "w",encoding="utf-8") as f:
                 for text in defect_text_list:
                     f.write(text)
             cv2.imwrite(file_name, output_image)
             logger.info(f"target image {image_tag} saved completed!")
 
-    '''处理图像
-    :param  smooth_length: 获取缺陷区域后，要在缺陷外一段区域进行一下平滑处理
-    :param  extend_length: 返回缺陷区域的时候，在缺陷外部再延伸一点区域返回,避免算法硬截断
-    '''
-    
     def __process_image(
         self,
         defect_img,
@@ -203,6 +204,10 @@ class datagen:
         smooth_length=5,
         extend_length=3,
     ):
+        """处理图像
+        :param  smooth_length: 获取缺陷区域后，要在缺陷外一段区域进行一下平滑处理
+        :param  extend_length: 返回缺陷区域的时候，在缺陷外部再延伸一点区域返回,避免算法硬截断
+        """
         diff_img = defect_img.astype(np.float32) - template_img.astype(np.float32)
         image_shape = template_img.shape
         # diff_img = (diff_img + 125)
@@ -265,9 +270,9 @@ class datagen:
 
         # compute the rotated bounding box of the largest contour
         x, y, w, h = cv2.boundingRect(c)
-        if w < 0.2*periodic_info[0] or w > 1.5*periodic_info[0]:
+        if w < 0.2 * periodic_info[0] or w > 1.5 * periodic_info[0]:
             raise Exception(f"缺陷提取出现错误，当前宽度为{w}")
-        if h < 0.2*periodic_info[1] or w > 1.5*periodic_info[1]:
+        if h < 0.2 * periodic_info[1] or w > 1.5 * periodic_info[1]:
             raise Exception(f"缺陷提取出现错误，当前高度为{h}")
 
         # 延伸扩展边界，避免强截断
@@ -291,7 +296,6 @@ class datagen:
         process_img = template_img.copy()
         process_img[y : y + h, x : x + w] = defect_img[y : y + h, x : x + w]
 
-        diff_img = diff_img
         x_lower_border = max(0, x - smooth_length)
         x_upper_border = min(image_shape[1] - 1, x + w + smooth_length - 1)
         y_lower_border = max(0, y - smooth_length)
@@ -333,7 +337,7 @@ class datagen:
                         / (min_distance + min_distance2)
                     )
         output_img = process_img[
-            y_lower_border:y_upper_border, x_lower_border: x_upper_border
+            y_lower_border:y_upper_border, x_lower_border:x_upper_border
         ]
 
         p = random.random()
@@ -347,5 +351,5 @@ class datagen:
                 x_upper_border - x_lower_border,
                 y_upper_border - y_lower_border,
             ),
-            True if p < 0.9 else False
+            p < 0.9,
         )

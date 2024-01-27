@@ -1,18 +1,15 @@
 import numpy as np
 from .logger import logger
 
-
-"""生成一束给定参数所确定的科勒照明光
-:param  maxtheta: 柯勒照明对应的多束平面波中最大的入射角
-:param  phi0: 偏振在孔径光阑平面中的方向与孔径光阑横向之间的夹角
-:param  spacing: 采样点的个数，采样密度
-:param  lambda0: 照明光波长
-:param  flag_is_symmetry: 是否按照对称的方式进行仿真，为true时只返回一半的照明光
-:return 返回值为一个字典的列表，字典包含每束平面波的参数
-"""
-
-
 def gen_kohler_sources(maxtheta, phi0, spacing, lambda0, flag_is_symmetry=False):
+    """生成一束给定参数所确定的科勒照明光
+    :param  maxtheta: 柯勒照明对应的多束平面波中最大的入射角
+    :param  phi0: 偏振在孔径光阑平面中的方向与孔径光阑横向之间的夹角
+    :param  spacing: 采样点的个数，采样密度
+    :param  lambda0: 照明光波长
+    :param  flag_is_symmetry: 是否按照对称的方式进行仿真，为true时只返回一半的照明光
+    :return 返回值为一个字典的列表，字典包含每束平面波的参数
+    """
     logger.info("generating kohler sources")
     logger.debug(
         f"received parameters was :maxtheta-{maxtheta}-phi0-{phi0}-spacing-{spacing}-lambda0-{lambda0}-symmetry-{flag_is_symmetry}"

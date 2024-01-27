@@ -1,22 +1,23 @@
+"""此模块负责JCMsuite工程项目的解算
+"""
+import os
+import shutil
+import datetime
+import cv2
 import jcmwave
 import numpy as np
 from .logger import logger
-import os
-import shutil
-import cv2
-import datetime
 
 
 # 包含了解算器的全部相关代码
 class solver:
-    """初始化solver
-    :param  jcmp_path: project.jcmp所在的路径
-    :param  database_path: resultbag.db所在的路径，使用不同的名字可改用不同的db
-    :param  keys: 在jcmpt或jcmt中所需要替换的全部key，以列表形式给出
-    :return nothing
-    """
-
     def __init__(self, jcmp_path, database_path, keys):
+        """初始化solver
+        :param  jcmp_path: project.jcmp所在的路径
+        :param  database_path: resultbag.db所在的路径，使用不同的名字可改用不同的db
+        :param  keys: 在jcmpt或jcmt中所需要替换的全部key，以列表形式给出
+        :return nothing
+        """
         # 初始化成员变量
         self.jcmp_path = jcmp_path
         self.keys = keys
@@ -33,11 +34,11 @@ class solver:
             f"solver parameters:jcmp_path-{jcmp_path};database_path-{abs_resultbag_dir}"
         )
 
-    """解算项目，核心函数
-    无需参数，不返回值，执行结束后所有信息都将已存在于resultbag.db中
-    """
-
     def solve(self):
+        """解算项目，核心函数
+        无需参数,信息已在类初始化时定义过
+        无返回值，执行结束后所有信息都将已存在于resultbag.db中
+        """
         self.__check_logger()
 
         # 初始化变量
@@ -92,13 +93,12 @@ class solver:
 
         logger.info("analyse complete ! No error report ! solve mission done!!")
 
-    """显示resultbag中指定的key对应的第num_of_result中的电场矢量对应的光强图
-    需要第num_of_result中的结果是ExportFields出来的ElectricFieldStrength才能正常显示，否则报错
-    :param  is_light_intense: 如果为True，输出光强图，否则是电场强度图
-    :param  vmax: 以0-vmax的(场强/光强)来对应0-235的像素值
-    """
-
     def show_image(self, key, num_of_result, is_light_intense=False, vmax=None):
+        """显示resultbag中指定的key对应的第num_of_result中的电场矢量对应的光强图
+        需要第num_of_result中的结果是ExportFields出来的ElectricFieldStrength才能正常显示，否则报错
+        :param  is_light_intense: 如果为True，输出光强图，否则是电场强度图
+        :param  vmax: 以0-vmax的(场强/光强)来对应0-235的像素值
+        """
         self.__check_logger()
         self.check_result(key)
 
@@ -119,20 +119,18 @@ class solver:
         field = np.rot90(field)
         cv2.imshow("image", field)
 
-    """返回resultbag中该key对应的result"""
-
     def get_result(self, key):
+        """返回resultbag中该key对应的result"""
         self.__check_logger()
         self.check_result(key)
         return self.resultbag.get_result(key)
 
-    """保存一张图像，大部分参数及意义与show_image函数相同
-    :param  target_directory: 图像将被保存至traget_directory/output.jpg
-    """
-
     def save_image(
         self, target_directory, key, num_of_result, is_light_intense=False, vmax=None
     ):
+        """保存一张图像，大部分参数及意义与show_image函数相同
+        :param  target_directory: 图像将被保存至traget_directory/output.jpg
+        """
         self.__check_logger()
         self.check_result(key)
 
@@ -157,11 +155,6 @@ class solver:
         cv2.imwrite(target_directory.rstrip("/") + "output.jpg", field)
         logger.info("target image saved successfully")
 
-    """保存resultbag中的所有图像至目标路径,同时输出一个所有图像加和形成的total_results.jpg
-    大部分参数与save_image相同
-    :param  is_symmetry: 是否是镜像，需要生成的科勒照明光同样启用了is_symmetry
-    """
-
     def save_all_image(
         self,
         num_of_result,
@@ -170,6 +163,10 @@ class solver:
         is_symmetry=False,
         vmax=None,
     ):
+        """保存resultbag中的所有图像至目标路径,同时输出一个所有图像加和形成的total_results.jpg
+        大部分参数与save_image相同
+        :param  is_symmetry: 是否是镜像，需要生成的科勒照明光同样启用了is_symmetry
+        """
         self.__check_logger()
         self.check_result(self.keys[0])
 
