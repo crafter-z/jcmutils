@@ -184,7 +184,7 @@ class solver:
             .sum(axis=2)
             .real
         )
-        total_results = np.zeros(field.shape)
+        total_results = np.zeros((field.shape[1],field.shape[0]))
         logger.debug(f"total_result shape defined as {total_results.shape}")
 
         # 开始逐个提取结果
